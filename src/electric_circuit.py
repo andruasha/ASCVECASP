@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import random
 
-from typing import Dict, List
-
 
 class ElectricCircuit:
 
@@ -12,7 +10,7 @@ class ElectricCircuit:
         self.nodes_coords = {'node1': {'x': 0, 'y': 0},
                              'node2': {'x': 5, 'y': 0},
                              'node3': {'x': 5, 'y': -5}}
-        self.nodes_connections: Dict[str, List[str]] = {}
+        self.nodes_connections = {}
 
     def find_double_nodes(self):
         def check_direction(nodes_coords, target, first_pair, second_pair):
@@ -64,31 +62,31 @@ class ElectricCircuit:
             checks = [
                 lambda: check_condition(
                     self.nodes_coords,
-                    {'x': coords['x']+5, 'y': coords['y']},
-                    {'x': coords['x'], 'y': coords['y']-5},
+                    {'x': coords['x'] + 5, 'y': coords['y']},
+                    {'x': coords['x'], 'y': coords['y'] - 5},
                     None,
-                    {'x': coords['x']+5, 'y': coords['y']-5}
+                    {'x': coords['x'] + 5, 'y': coords['y'] - 5}
                 ),
                 lambda: check_condition(
                     self.nodes_coords,
-                    {'x': coords['x']+5, 'y': coords['y']},
-                    {'x': coords['x'], 'y': coords['y']+5},
+                    {'x': coords['x'] + 5, 'y': coords['y']},
+                    {'x': coords['x'], 'y': coords['y'] + 5},
                     None,
-                    {'x': coords['x']+5, 'y': coords['y']+5}
+                    {'x': coords['x'] + 5, 'y': coords['y'] + 5}
                 ),
                 lambda: check_condition(
                     self.nodes_coords,
-                    {'x': coords['x']-5, 'y': coords['y']},
-                    {'x': coords['x'], 'y': coords['y']-5},
+                    {'x': coords['x'] - 5, 'y': coords['y']},
+                    {'x': coords['x'], 'y': coords['y'] - 5},
                     None,
-                    {'x': coords['x']-5, 'y': coords['y']-5}
+                    {'x': coords['x'] - 5, 'y': coords['y'] - 5}
                 ),
                 lambda: check_condition(
                     self.nodes_coords,
-                    {'x': coords['x']-5, 'y': coords['y']},
-                    {'x': coords['x'], 'y': coords['y']+5},
+                    {'x': coords['x'] - 5, 'y': coords['y']},
+                    {'x': coords['x'], 'y': coords['y'] + 5},
                     None,
-                    {'x': coords['x']-5, 'y': coords['y']+5}
+                    {'x': coords['x'] - 5, 'y': coords['y'] + 5}
                 )
             ]
 
@@ -134,22 +132,31 @@ class ElectricCircuit:
     def connect_nodes(self):
         plt.figure(figsize=(10, 10))
         plt.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray')
-        plt.xticks(range(-12, 13, 1))
-        plt.yticks(range(-12, 13, 1))
-        plt.xlim(-12, 12)
-        plt.ylim(-12, 12)
+        plt.xticks(range(-13, 14, 1))
+        plt.yticks(range(-13, 14, 1))
+        plt.xlim(-13, 13)
+        plt.ylim(-13, 13)
+
+        for node in self.nodes_coords.keys():
+            self.nodes_connections[node] = []
 
         for node, coords in self.nodes_coords.items():
             plt.plot(coords['x'], coords['y'], 'ko')
             near_nodes = self.find_near_node(coords)
             for near_node in near_nodes:
                 for key, value in near_node.items():
-                    if key not in self.nodes_connections.get(node, []):
+                    if key not in self.nodes_connections[node]:
                         x_coords = [coords['x'], value['x']]
                         y_coords = [coords['y'], value['y']]
                         plt.plot(x_coords, y_coords, 'b-')
-                        if node not in self.nodes_connections:
-                            self.nodes_connections[node] = []
                         self.nodes_connections[node].append(key)
-
         plt.show()
+
+    def get_num_branches(self):
+        unique_connections = set()
+
+        for node, connections in self.nodes_connections.items():
+            for connected_node in connections:
+                unique_connections.add(tuple(sorted([node, connected_node])))
+
+        return len(unique_connections)
