@@ -5,12 +5,23 @@ import random
 class ElectricCircuit:
 
     def __init__(self, nodes_num, branches_num):
+
+        available_init_coords = [
+            {'x': 0, 'y': 0},
+            {'x': 5, 'y': 0},
+            {'x': 0, 'y': -5},
+            {'x': 5, 'y': -5}
+        ]
+
+        selected_coords = random.sample(available_init_coords, 3)
+
         self.nodes_num = nodes_num
         self.branches_num = branches_num
-        self.nodes_coords = {'node1': {'x': 0, 'y': 0},
-                             'node2': {'x': 5, 'y': 0},
-                             'node3': {'x': 5, 'y': -5}}
         self.nodes_connections = {}
+        self.contour_points = []
+        self.nodes_coords = {
+            f'node{i + 1}': coord for i, coord in enumerate(selected_coords)
+        }
 
     def find_double_nodes(self):
         def check_direction(nodes_coords, target, first_pair, second_pair):
@@ -129,7 +140,39 @@ class ElectricCircuit:
 
         self.nodes_coords['node' + str(len(self.nodes_coords) + 1)] = new_node_coords
 
-    def connect_nodes(self):
+    def create_nodes_connections(self):
+        for node, coords in self.nodes_coords.items():
+            near_nodes = self.find_near_node(coords)
+            for near_node in near_nodes:
+                for key, value in near_node.items():
+                    if (((node + '->' + key) not in self.nodes_connections) and
+                            ((key + '->' + node) not in self.nodes_connections)):
+                        self.nodes_connections[node+'->'+key] = [coords, value]
+
+        node_count = {}
+
+        for key in self.nodes_connections.keys():
+            node_a, node_b = key.split('->')
+
+            if node_a in node_count:
+                node_count[node_a] += 1
+            else:
+                node_count[node_a] = 1
+
+            if node_b in node_count:
+                node_count[node_b] += 1
+            else:
+                node_count[node_b] = 1
+
+        single_connection_nodes = [node for node, count in node_count.items() if count == 1]
+
+        if single_connection_nodes == 2:
+
+
+            print(self.nodes_connections)
+            print(single_connection_nodes)
+
+    def visualise_circuit(self):
         plt.figure(figsize=(10, 10))
         plt.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray')
         plt.xticks(range(-13, 14, 1))
@@ -137,26 +180,16 @@ class ElectricCircuit:
         plt.xlim(-13, 13)
         plt.ylim(-13, 13)
 
-        for node in self.nodes_coords.keys():
-            self.nodes_connections[node] = []
-
         for node, coords in self.nodes_coords.items():
             plt.plot(coords['x'], coords['y'], 'ko')
-            near_nodes = self.find_near_node(coords)
-            for near_node in near_nodes:
-                for key, value in near_node.items():
-                    if key not in self.nodes_connections[node]:
-                        x_coords = [coords['x'], value['x']]
-                        y_coords = [coords['y'], value['y']]
-                        plt.plot(x_coords, y_coords, 'b-')
-                        self.nodes_connections[node].append(key)
+
+        for key, value in self.nodes_connections.items():
+            for i in range(0, len(value), 2):
+                if i + 1 < len(value):
+                    plt.plot([value[i]['x'], value[i+1]['x']], [value[i]['y'], value[i+1]['y']], 'k-')
         plt.show()
 
-    def get_num_branches(self):
-        unique_connections = set()
-
-        for node, connections in self.nodes_connections.items():
-            for connected_node in connections:
-                unique_connections.add(tuple(sorted([node, connected_node])))
-
-        return len(unique_connections)
+    def get_coords_by_node(self, node):
+        for key, value in self.nodes_coords.items():
+            if key == node:
+                return value
