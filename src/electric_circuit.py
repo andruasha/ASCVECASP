@@ -147,11 +147,10 @@ class ElectricCircuit:
                 for key, value in near_node.items():
                     if (((node + '->' + key) not in self.nodes_connections) and
                             ((key + '->' + node) not in self.nodes_connections)):
-                        self.nodes_connections[node+'->'+key] = [coords, value]
+                        self.nodes_connections[node+'->'+key] = [[coords, value]]
 
         single_nodes = self.get_single_nodes()
         third_node_coords = {}
-        imaginary_node_coords = {}
 
         if len(single_nodes) == 2:
             for node, coords in self.nodes_coords.items():
@@ -161,7 +160,7 @@ class ElectricCircuit:
             values = list(single_nodes.values())
             imaginary_node_coords = {'x': values[0]['x'] + values[1]['x'] - third_node_coords['x'],
                                      'y': values[0]['y'] + values[1]['y'] - third_node_coords['y']}
-            self.nodes_connections[keys[0] + '->' + keys[1]] = [values[0], imaginary_node_coords, values[1]]
+            self.nodes_connections[keys[0] + '->' + keys[1]] = [[values[0], imaginary_node_coords, values[1]]]
 
     def get_num_of_connected_nodes(self, target_node):
         connected_nodes = []
@@ -193,9 +192,10 @@ class ElectricCircuit:
             plt.plot(coords['x'], coords['y'], 'ko')
 
         for key, value in self.nodes_connections.items():
-            for i in range(0, len(value)):
-                if i + 1 < len(value):
-                    plt.plot([value[i]['x'], value[i+1]['x']], [value[i]['y'], value[i+1]['y']], 'k-')
+            for connection in value:
+                for i in range(0, len(connection)):
+                    if i + 1 < len(connection):
+                        plt.plot([connection[i]['x'], connection[i+1]['x']], [connection[i]['y'], connection[i+1]['y']], 'k-')
         plt.show()
 
     def get_coords_by_node(self, node):
