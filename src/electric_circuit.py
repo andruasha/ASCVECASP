@@ -149,28 +149,37 @@ class ElectricCircuit:
                             ((key + '->' + node) not in self.nodes_connections)):
                         self.nodes_connections[node+'->'+key] = [coords, value]
 
-        node_count = {}
+        single_nodes = self.get_single_nodes()
+        third_node_coords = {}
+        imaginary_node_coords = {}
+
+        if len(single_nodes) == 2:
+            for node, coords in self.nodes_coords.items():
+                if node not in single_nodes.keys():
+                    third_node_coords = coords
+            keys = list(single_nodes.keys())
+            values = list(single_nodes.values())
+            imaginary_node_coords = {'x': values[0]['x'] + values[1]['x'] - third_node_coords['x'],
+                                     'y': values[0]['y'] + values[1]['y'] - third_node_coords['y']}
+            self.nodes_connections[keys[0] + '->' + keys[1]] = [values[0], imaginary_node_coords, values[1]]
+
+    def get_num_of_connected_nodes(self, target_node):
+        connected_nodes = []
 
         for key in self.nodes_connections.keys():
-            node_a, node_b = key.split('->')
+            if target_node in key.split('->'):
+                connected_nodes.append((set(key.split('->')) - {target_node}).pop())
 
-            if node_a in node_count:
-                node_count[node_a] += 1
-            else:
-                node_count[node_a] = 1
+        return connected_nodes
 
-            if node_b in node_count:
-                node_count[node_b] += 1
-            else:
-                node_count[node_b] = 1
+    def get_single_nodes(self):
+        single_nodes = {}
 
-        single_connection_nodes = [node for node, count in node_count.items() if count == 1]
+        for node, coords in self.nodes_coords.items():
+            if len(self.get_num_of_connected_nodes(node)) == 1:
+                single_nodes[node] = coords
 
-        if single_connection_nodes == 2:
-
-
-            print(self.nodes_connections)
-            print(single_connection_nodes)
+        return single_nodes
 
     def visualise_circuit(self):
         plt.figure(figsize=(10, 10))
@@ -184,7 +193,7 @@ class ElectricCircuit:
             plt.plot(coords['x'], coords['y'], 'ko')
 
         for key, value in self.nodes_connections.items():
-            for i in range(0, len(value), 2):
+            for i in range(0, len(value)):
                 if i + 1 < len(value):
                     plt.plot([value[i]['x'], value[i+1]['x']], [value[i]['y'], value[i+1]['y']], 'k-')
         plt.show()
