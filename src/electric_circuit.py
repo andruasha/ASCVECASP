@@ -147,7 +147,7 @@ class ElectricCircuit:
                 for key, value in near_node.items():
                     if (((node + '->' + key) not in self.nodes_connections) and
                             ((key + '->' + node) not in self.nodes_connections)):
-                        self.nodes_connections[node+'->'+key] = [[coords, value]]
+                        self.nodes_connections[node + '->' + key] = [[coords, value]]
 
         single_nodes = self.get_single_nodes()
         third_node_coords = {}
@@ -161,6 +161,65 @@ class ElectricCircuit:
             imaginary_node_coords = {'x': values[0]['x'] + values[1]['x'] - third_node_coords['x'],
                                      'y': values[0]['y'] + values[1]['y'] - third_node_coords['y']}
             self.nodes_connections[keys[0] + '->' + keys[1]] = [[values[0], imaginary_node_coords, values[1]]]
+
+        if len(single_nodes) == 1:
+            single_node_coords = self.get_node_coords(single_nodes)
+            single_node_name = self.get_node_name(single_nodes)
+            near_node = self.get_near_nodes(single_nodes)
+            near_node_name = self.get_node_name(near_node[0])
+            near_node_coords = self.get_node_coords(near_node[0])
+
+            upper_near_of_near_node_coords = None
+            lower_near_of_near_node_coords = None
+            right_near_of_near_node_coords = None
+            left_near_of_near_node_coords = None
+
+            if self.check_exist_node({'x': near_node_coords['x'], 'y': near_node_coords['y'] + 5}):
+                upper_near_of_near_node_coords = {'x': near_node_coords['x'], 'y': near_node_coords['y'] + 5}
+            if self.check_exist_node({'x': near_node_coords['x'], 'y': near_node_coords['y'] - 5}):
+                lower_near_of_near_node_coords = {'x': near_node_coords['x'], 'y': near_node_coords['y'] - 5}
+            if self.check_exist_node({'x': near_node_coords['x'] + 5, 'y': near_node_coords['y']}):
+                right_near_of_near_node_coords = {'x': near_node_coords['x'] + 5, 'y': near_node_coords['y']}
+            if self.check_exist_node({'x': near_node_coords['x'] - 5, 'y': near_node_coords['y']}):
+                left_near_of_near_node_coords = {'x': near_node_coords['x'] - 5, 'y': near_node_coords['y']}
+
+            if (near_node_coords['y'] > single_node_coords['y']) or (near_node_coords['y'] < single_node_coords['y']):
+                if left_near_of_near_node_coords and right_near_of_near_node_coords:
+                    nn_coords = random.choice([left_near_of_near_node_coords, right_near_of_near_node_coords])
+                elif left_near_of_near_node_coords:
+                    nn_coords = left_near_of_near_node_coords
+                else:
+                    nn_coords = right_near_of_near_node_coords
+
+                imaginary_node_coords = {'x': single_node_coords['x'] + nn_coords['x'] - near_node_coords['x'],
+                                         'y': single_node_coords['y'] + nn_coords['y'] - near_node_coords['y']}
+                self.nodes_connections[single_node_name + '->' + near_node_name] = [[single_node_coords,
+                                                                                     imaginary_node_coords,
+                                                                                     nn_coords]]
+            else:
+                if upper_near_of_near_node_coords and lower_near_of_near_node_coords:
+                    nn_coords = random.choice([upper_near_of_near_node_coords, lower_near_of_near_node_coords])
+                elif upper_near_of_near_node_coords:
+                    nn_coords = upper_near_of_near_node_coords
+                else:
+                    nn_coords = lower_near_of_near_node_coords
+
+                imaginary_node_coords = {'x': single_node_coords['x'] + nn_coords['x'] - near_node_coords['x'],
+                                         'y': single_node_coords['y'] + nn_coords['y'] - near_node_coords['y']}
+                self.nodes_connections[single_node_name + '->' + near_node_name] = [[single_node_coords,
+                                                                                     imaginary_node_coords,
+                                                                                     nn_coords]]
+
+    def get_near_nodes(self, target_node):
+        target_node_coords = self.get_node_coords(target_node)
+        near_nodes = []
+        for node, coords in self.nodes_coords.items():
+            if (coords == {'x': target_node_coords['x'] + 5, 'y': target_node_coords['y']} or
+                    coords == {'x': target_node_coords['x'] - 5, 'y': target_node_coords['y']} or
+                    coords == {'x': target_node_coords['x'], 'y': target_node_coords['y'] + 5} or
+                    coords == {'x': target_node_coords['x'], 'y': target_node_coords['y'] - 5}):
+                near_nodes.append({node: coords})
+        return near_nodes
 
     def get_num_of_connected_nodes(self, target_node):
         connected_nodes = []
@@ -195,10 +254,25 @@ class ElectricCircuit:
             for connection in value:
                 for i in range(0, len(connection)):
                     if i + 1 < len(connection):
-                        plt.plot([connection[i]['x'], connection[i+1]['x']], [connection[i]['y'], connection[i+1]['y']], 'k-')
+                        plt.plot([connection[i]['x'], connection[i + 1]['x']],
+                                 [connection[i]['y'], connection[i + 1]['y']], 'k-')
         plt.show()
 
     def get_coords_by_node(self, node):
         for key, value in self.nodes_coords.items():
             if key == node:
                 return value
+
+    def check_exist_node(self, target_coords):
+        for name, coords in self.nodes_coords.items():
+            if coords == target_coords:
+                return True
+        return False
+
+    @staticmethod
+    def get_node_name(target_node):
+        return list(target_node.keys())[0]
+
+    @staticmethod
+    def get_node_coords(target_node):
+        return list(target_node.values())[0]
