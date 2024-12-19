@@ -1,114 +1,18 @@
 import matplotlib.pyplot as plt
 import random
 
+scale = 5
+
 
 class ElectricCircuit:
 
     def __init__(self, nodes_num, branches_num):
 
-        available_init_coords = [
-            {'x': 0, 'y': 0},
-            {'x': 5, 'y': 0},
-            {'x': 0, 'y': -5},
-            {'x': 5, 'y': -5}
-        ]
-
-        selected_coords = random.sample(available_init_coords, 3)
-
         self.nodes_num = nodes_num
         self.branches_num = branches_num
         self.nodes_connections = {}
         self.contour_points = []
-        self.nodes_coords = {
-            f'node{i + 1}': coord for i, coord in enumerate(selected_coords)
-        }
-
-    def find_double_nodes(self):
-        def check_direction(nodes_coords, target, first_pair, second_pair):
-            if target in nodes_coords.values():
-                if all(pair not in nodes_coords.values() for pair in first_pair):
-                    return random.choice(first_pair)
-                if all(pair not in nodes_coords.values() for pair in second_pair):
-                    return random.choice(second_pair)
-            return None
-
-        for node, coords in self.nodes_coords.items():
-            checks = [
-                lambda: check_direction(
-                    self.nodes_coords, {'x': coords['x'] + 5, 'y': coords['y']},
-                    [{'x': coords['x'], 'y': coords['y'] + 5}, {'x': coords['x'] + 5, 'y': coords['y'] + 5}],
-                    [{'x': coords['x'], 'y': coords['y'] - 5}, {'x': coords['x'] + 5, 'y': coords['y'] - 5}]
-                ),
-                lambda: check_direction(
-                    self.nodes_coords, {'x': coords['x'] - 5, 'y': coords['y']},
-                    [{'x': coords['x'], 'y': coords['y'] + 5}, {'x': coords['x'] - 5, 'y': coords['y'] + 5}],
-                    [{'x': coords['x'], 'y': coords['y'] - 5}, {'x': coords['x'] - 5, 'y': coords['y'] - 5}]
-                ),
-                lambda: check_direction(
-                    self.nodes_coords, {'x': coords['x'], 'y': coords['y'] + 5},
-                    [{'x': coords['x'] + 5, 'y': coords['y']}, {'x': coords['x'] + 5, 'y': coords['y'] + 5}],
-                    [{'x': coords['x'] - 5, 'y': coords['y']}, {'x': coords['x'] - 5, 'y': coords['y'] + 5}]
-                ),
-                lambda: check_direction(
-                    self.nodes_coords, {'x': coords['x'], 'y': coords['y'] - 5},
-                    [{'x': coords['x'] + 5, 'y': coords['y']}, {'x': coords['x'] + 5, 'y': coords['y'] - 5}],
-                    [{'x': coords['x'] - 5, 'y': coords['y']}, {'x': coords['x'] - 5, 'y': coords['y'] - 5}]
-                )
-            ]
-
-            random.shuffle(checks)
-
-            for check in checks:
-                result = check()
-                if result:
-                    return result
-
-    def find_right_angle(self):
-        def check_condition(nodes_coords, target, cond1, cond2, exclude):
-            if target in nodes_coords.values() and cond1 in nodes_coords.values() and exclude not in nodes_coords.values():
-                return exclude
-            return None
-
-        for node, coords in self.nodes_coords.items():
-            checks = [
-                lambda: check_condition(
-                    self.nodes_coords,
-                    {'x': coords['x'] + 5, 'y': coords['y']},
-                    {'x': coords['x'], 'y': coords['y'] - 5},
-                    None,
-                    {'x': coords['x'] + 5, 'y': coords['y'] - 5}
-                ),
-                lambda: check_condition(
-                    self.nodes_coords,
-                    {'x': coords['x'] + 5, 'y': coords['y']},
-                    {'x': coords['x'], 'y': coords['y'] + 5},
-                    None,
-                    {'x': coords['x'] + 5, 'y': coords['y'] + 5}
-                ),
-                lambda: check_condition(
-                    self.nodes_coords,
-                    {'x': coords['x'] - 5, 'y': coords['y']},
-                    {'x': coords['x'], 'y': coords['y'] - 5},
-                    None,
-                    {'x': coords['x'] - 5, 'y': coords['y'] - 5}
-                ),
-                lambda: check_condition(
-                    self.nodes_coords,
-                    {'x': coords['x'] - 5, 'y': coords['y']},
-                    {'x': coords['x'], 'y': coords['y'] + 5},
-                    None,
-                    {'x': coords['x'] - 5, 'y': coords['y'] + 5}
-                )
-            ]
-
-            random.shuffle(checks)
-
-            for check in checks:
-                result = check()
-                if result:
-                    return result
-
-        return None
+        self.nodes_coords = {}
 
     def find_near_node(self, node_coords):
         near_nodes = []
@@ -130,15 +34,65 @@ class ElectricCircuit:
         return near_nodes
 
     def add_node(self):
-        nodes_coords_keys = list(self.nodes_coords.keys())
-        random.shuffle(nodes_coords_keys)
-        self.nodes_coords = {key: self.nodes_coords[key] for key in nodes_coords_keys}
-        new_node_coords = self.find_right_angle()
 
-        if not new_node_coords:
-            new_node_coords = self.find_double_nodes()
+        template_two_nodes_1 = {'node1': {'x': 0, 'y': 0},
+                                'node2': {'x': scale, 'y': 0}}
 
-        self.nodes_coords['node' + str(len(self.nodes_coords) + 1)] = new_node_coords
+        template_two_nodes_2 = {'node1': {'x': 0, 'y': 0},
+                                'node2': {'x': 0, 'y': scale}}
+
+        template_three_nodes_1 = {'node1': {'x': 0, 'y': 0},
+                                  'node2': {'x': 0, 'y': scale},
+                                  'node3': {'x': scale, 'y': scale}}
+
+        template_three_nodes_2 = {'node1': {'x': 0, 'y': scale},
+                                  'node2': {'x': scale, 'y': scale},
+                                  'node3': {'x': scale, 'y': 0}}
+
+        template_three_nodes_3 = {'node1': {'x': scale, 'y': scale},
+                                  'node2': {'x': scale, 'y': 0},
+                                  'node3': {'x': 0, 'y': 0}}
+
+        template_four_nodes_1 = {'node1': {'x': 0, 'y': 0},
+                                 'node2': {'x': 0, 'y': scale},
+                                 'node3': {'x': scale, 'y': scale},
+                                 'node4': {'x': scale, 'y': 0}}
+
+        template_four_nodes_2 = {'node1': {'x': 0, 'y': scale},
+                                 'node2': {'x': scale, 'y': scale},
+                                 'node3': {'x': 2 * scale, 'y': scale},
+                                 'node4': {'x': scale, 'y': 0}}
+
+        template_four_nodes_3 = {'node1': {'x': 0, 'y': scale},
+                                 'node2': {'x': scale, 'y': 2 * scale},
+                                 'node3': {'x': scale, 'y': scale},
+                                 'node4': {'x': scale, 'y': 0}}
+
+        template_four_nodes_4 = {'node1': {'x': scale, 'y': scale},
+                                 'node2': {'x': 2 * scale, 'y': 0},
+                                 'node3': {'x': scale, 'y': 0},
+                                 'node4': {'x': 0, 'y': 0}}
+
+        template_four_nodes_5 = {'node1': {'x': 0, 'y': 0},
+                                 'node2': {'x': 0, 'y': scale},
+                                 'node3': {'x': 0, 'y': 2 * scale},
+                                 'node4': {'x': scale, 'y': scale}}
+
+        if self.nodes_num == 2:
+            self.nodes_coords = random.choice([template_two_nodes_1,
+                                               template_two_nodes_2])
+
+        if self.nodes_num == 3:
+            self.nodes_coords = random.choice([template_three_nodes_1,
+                                               template_three_nodes_2,
+                                               template_three_nodes_3])
+
+        if self.nodes_num == 4:
+            self.nodes_coords = random.choice([template_four_nodes_1,
+                                               template_four_nodes_2,
+                                               template_four_nodes_3,
+                                               template_four_nodes_4,
+                                               template_four_nodes_5])
 
     def create_nodes_connections(self):
         for node, coords in self.nodes_coords.items():
@@ -268,6 +222,77 @@ class ElectricCircuit:
             if coords == target_coords:
                 return True
         return False
+
+    def get_contour(self):
+        def check_exist_line(lines, target_line):
+            for i in lines:
+                if target_line == i:
+                    return True
+            return False
+
+        lines = []
+        contour_lines = []
+        contour_points = []
+
+        for key, value in self.nodes_connections.items():
+            for connection in value:
+                for i in range(0, len(connection)):
+                    if i + 1 < len(connection):
+                        line = [{'x': connection[i]['x'], 'y': connection[i]['y']},
+                                {'x': connection[i + 1]['x'], 'y': connection[i + 1]['y']}]
+                        lines.append(line)
+
+        for line in lines:
+            if line[0]['x'] == line[1]['x']:
+                target_neighbour_1 = [{'x': line[0]['x'] + 5, 'y': line[0]['y']},
+                                      {'x': line[1]['x'] + 5, 'y': line[1]['y']}]
+                target_neighbour_2 = [{'x': line[1]['x'] + 5, 'y': line[1]['y']},
+                                      {'x': line[0]['x'] + 5, 'y': line[0]['y']}]
+                target_neighbour_3 = [{'x': line[0]['x'] - 5, 'y': line[0]['y']},
+                                      {'x': line[1]['x'] - 5, 'y': line[1]['y']}]
+                target_neighbour_4 = [{'x': line[1]['x'] - 5, 'y': line[1]['y']},
+                                      {'x': line[0]['x'] - 5, 'y': line[0]['y']}]
+
+                if (
+                        (
+                                (check_exist_line(lines, target_neighbour_1) is False) and
+                                (check_exist_line(lines, target_neighbour_2) is False)
+                        ) or
+                        (
+                                (check_exist_line(lines, target_neighbour_3) is False) and
+                                (check_exist_line(lines, target_neighbour_4) is False)
+                        )
+                ):
+                    contour_lines.append(line)
+
+            elif line[0]['y'] == line[1]['y']:
+                target_neighbour_1 = [{'x': line[0]['x'], 'y': line[0]['y'] + 5},
+                                      {'x': line[1]['x'], 'y': line[1]['y'] + 5}]
+                target_neighbour_2 = [{'x': line[1]['x'], 'y': line[1]['y'] + 5},
+                                      {'x': line[0]['x'], 'y': line[0]['y'] + 5}]
+                target_neighbour_3 = [{'x': line[0]['x'], 'y': line[0]['y'] - 5},
+                                      {'x': line[1]['x'], 'y': line[1]['y'] - 5}]
+                target_neighbour_4 = [{'x': line[1]['x'], 'y': line[1]['y'] - 5},
+                                      {'x': line[0]['x'], 'y': line[0]['y'] - 5}]
+
+                if (
+                        (
+                                (check_exist_line(lines, target_neighbour_1) is False) and
+                                (check_exist_line(lines, target_neighbour_2) is False)
+                        ) or
+                        (
+                                (check_exist_line(lines, target_neighbour_3) is False) and
+                                (check_exist_line(lines, target_neighbour_4) is False)
+                        )
+                ):
+                    contour_lines.append(line)
+
+        for line in contour_lines:
+            for i in range(0, 2):
+                if {'x': line[i]['x'], 'y': line[i]['y']} not in contour_points:
+                    contour_points.append({'x': line[i]['x'], 'y': line[i]['y']})
+
+        return contour_lines
 
     @staticmethod
     def get_node_name(target_node):
