@@ -1,26 +1,24 @@
-import matplotlib.pyplot as plt
-import random
+from conf.config import SCALE
 
-SCALE = 5
+import matplotlib.pyplot as plt
 
 
 class ElectricCircuit:
 
-    def __init__(self, nodes_num, branches_num):
+    def __init__(self, nodes_num, branches_num, nodes_coords):
 
         self.nodes_num = nodes_num
         self.branches_num = branches_num
+        self.nodes_coords = nodes_coords
         self.nodes_connections = {}
-        self.contour_points = []
-        self.nodes_coords = {}
 
     def find_near_node(self, node_coords):
         near_nodes = []
         directions = [
-            {'x': 5, 'y': 0},
-            {'x': -5, 'y': 0},
-            {'x': 0, 'y': 5},
-            {'x': 0, 'y': -5},
+            {'x': SCALE, 'y': 0},
+            {'x': -SCALE, 'y': 0},
+            {'x': 0, 'y': SCALE},
+            {'x': 0, 'y': -SCALE}
         ]
 
         for direction in directions:
@@ -32,67 +30,6 @@ class ElectricCircuit:
                     near_nodes.append({key: target_coords})
 
         return near_nodes
-
-    def add_node(self):
-
-        template_two_nodes_1 = {'node1': {'x': 0, 'y': 0},
-                                'node2': {'x': SCALE, 'y': 0}}
-
-        template_two_nodes_2 = {'node1': {'x': 0, 'y': 0},
-                                'node2': {'x': 0, 'y': SCALE}}
-
-        template_three_nodes_1 = {'node1': {'x': 0, 'y': 0},
-                                  'node2': {'x': 0, 'y': SCALE},
-                                  'node3': {'x': SCALE, 'y': SCALE}}
-
-        template_three_nodes_2 = {'node1': {'x': 0, 'y': SCALE},
-                                  'node2': {'x': SCALE, 'y': SCALE},
-                                  'node3': {'x': SCALE, 'y': 0}}
-
-        template_three_nodes_3 = {'node1': {'x': SCALE, 'y': SCALE},
-                                  'node2': {'x': SCALE, 'y': 0},
-                                  'node3': {'x': 0, 'y': 0}}
-
-        template_four_nodes_1 = {'node1': {'x': 0, 'y': 0},
-                                 'node2': {'x': 0, 'y': SCALE},
-                                 'node3': {'x': SCALE, 'y': SCALE},
-                                 'node4': {'x': SCALE, 'y': 0}}
-
-        template_four_nodes_2 = {'node1': {'x': 0, 'y': SCALE},
-                                 'node2': {'x': SCALE, 'y': SCALE},
-                                 'node3': {'x': 2 * SCALE, 'y': SCALE},
-                                 'node4': {'x': SCALE, 'y': 0}}
-
-        template_four_nodes_3 = {'node1': {'x': 0, 'y': SCALE},
-                                 'node2': {'x': SCALE, 'y': 2 * SCALE},
-                                 'node3': {'x': SCALE, 'y': SCALE},
-                                 'node4': {'x': SCALE, 'y': 0}}
-
-        template_four_nodes_4 = {'node1': {'x': SCALE, 'y': SCALE},
-                                 'node2': {'x': 2 * SCALE, 'y': 0},
-                                 'node3': {'x': SCALE, 'y': 0},
-                                 'node4': {'x': 0, 'y': 0}}
-
-        template_four_nodes_5 = {'node1': {'x': 0, 'y': 0},
-                                 'node2': {'x': 0, 'y': SCALE},
-                                 'node3': {'x': 0, 'y': 2 * SCALE},
-                                 'node4': {'x': SCALE, 'y': SCALE}}
-
-        if self.nodes_num == 2:
-            self.nodes_coords = random.choice([template_two_nodes_1,
-                                               template_two_nodes_2])
-
-        if self.nodes_num == 3:
-            self.nodes_coords = random.choice([template_three_nodes_1,
-                                               template_three_nodes_2,
-                                               template_three_nodes_3])
-
-        if self.nodes_num == 4:
-            self.nodes_coords = random.choice([template_four_nodes_1,
-                                               template_four_nodes_2,
-                                               template_four_nodes_3,
-                                               template_four_nodes_4,
-                                               template_four_nodes_5])
 
     def create_nodes_connections(self):
         for node, coords in self.nodes_coords.items():
