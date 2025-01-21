@@ -74,6 +74,20 @@ class ElectricCircuit:
             add_connection_if_needed(neighbours['down'], neighbours['left'],
                                      neighbours['down_left'], "dl")
 
+        if self.nodes_num == 2:
+            self.nodes_connections['node1->node2'].append([{'x': 0, 'y': 0},
+                                                           {'x': 0, 'y': SCALE},
+                                                           {'x': SCALE, 'y': SCALE},
+                                                           {'x': SCALE, 'y': 0}])
+
+            self.nodes_connections['node1->node2'].append([{'x': 0, 'y': 0},
+                                                           {'x': 0, 'y': -SCALE},
+                                                           {'x': SCALE, 'y': -SCALE},
+                                                           {'x': SCALE, 'y': 0}])
+
+        # if self.nodes_num == 2:
+        #     while len(self.nodes_connections) < self.branches_num:
+        #         pass
     def get_num_of_connected_nodes(self, target_node):
         connected_nodes = []
 
