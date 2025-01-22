@@ -1,6 +1,7 @@
 from conf.config import SCALE
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 
 class ElectricCircuit:
@@ -76,18 +77,27 @@ class ElectricCircuit:
 
         if self.nodes_num == 2:
             self.nodes_connections['node1->node2'].append([{'x': 0, 'y': 0},
-                                                           {'x': 0, 'y': SCALE},
-                                                           {'x': SCALE, 'y': SCALE},
+                                                           {'x': 0, 'y': 0.5*SCALE},
+                                                           {'x': SCALE, 'y': 0.5*SCALE},
                                                            {'x': SCALE, 'y': 0}])
 
             self.nodes_connections['node1->node2'].append([{'x': 0, 'y': 0},
-                                                           {'x': 0, 'y': -SCALE},
-                                                           {'x': SCALE, 'y': -SCALE},
+                                                           {'x': 0, 'y': -0.5*SCALE},
+                                                           {'x': SCALE, 'y': -0.5*SCALE},
                                                            {'x': SCALE, 'y': 0}])
 
-        # if self.nodes_num == 2:
-        #     while len(self.nodes_connections) < self.branches_num:
-        #         pass
+            available_connections = [
+                [{'x': 0, 'y': 0}, {'x': 0, 'y': SCALE}, {'x': SCALE, 'y': SCALE}, {'x': SCALE, 'y': 0}],
+                [{'x': 0, 'y': 0}, {'x': 0, 'y': -SCALE}, {'x': SCALE, 'y': -SCALE}, {'x': SCALE, 'y': 0}],
+                [{'x': 0, 'y': 0}, {'x': 0, 'y': 1.5*SCALE}, {'x': SCALE, 'y': 1.5*SCALE}, {'x': SCALE, 'y': 0}],
+            ]
+
+            for available_connection in available_connections:
+                if self.get_num_branches() < self.branches_num:
+                    self.nodes_connections['node1->node2'].append(available_connection)
+                else:
+                    break
+
     def get_num_of_connected_nodes(self, target_node):
         connected_nodes = []
 
@@ -108,13 +118,16 @@ class ElectricCircuit:
 
         for node, coords in self.nodes.items():
             plt.plot(coords['x'], coords['y'], 'ko')
+
         print(self.nodes_connections)
+
         for key, value in self.nodes_connections.items():
             for connection in value:
                 for i in range(0, len(connection)):
                     if i + 1 < len(connection):
                         plt.plot([connection[i]['x'], connection[i + 1]['x']],
                                  [connection[i]['y'], connection[i + 1]['y']], 'k-')
+
         plt.show()
 
     def get_coords_by_name(self, node_name):
@@ -132,6 +145,12 @@ class ElectricCircuit:
             if coords == target_coords:
                 return True
         return False
+
+    def get_num_branches(self):
+        num_branches = 0
+        for key, value in self.nodes_connections.items():
+            num_branches = num_branches + len(value)
+        return num_branches
 
     @staticmethod
     def get_node_name(target_node):
