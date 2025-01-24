@@ -2,14 +2,15 @@ from conf.config import SCALE
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import random
 
 
 class ElectricCircuit:
 
-    def __init__(self, nodes_num, branches_num, nodes):
+    def __init__(self, branches_num, nodes):
 
         self.nodes = nodes
-        self.nodes_num = nodes_num
+        self.nodes_num = len(nodes)
         self.nodes_connections = {}
         self.branches_num = branches_num
 
@@ -87,14 +88,52 @@ class ElectricCircuit:
                                                            {'x': SCALE, 'y': 0}])
 
             available_connections = [
-                [{'x': 0, 'y': 0}, {'x': 0, 'y': SCALE}, {'x': SCALE, 'y': SCALE}, {'x': SCALE, 'y': 0}],
-                [{'x': 0, 'y': 0}, {'x': 0, 'y': -SCALE}, {'x': SCALE, 'y': -SCALE}, {'x': SCALE, 'y': 0}],
-                [{'x': 0, 'y': 0}, {'x': 0, 'y': 1.5*SCALE}, {'x': SCALE, 'y': 1.5*SCALE}, {'x': SCALE, 'y': 0}],
+                {'node1->node2': [{'x': 0, 'y': 0},
+                                  {'x': 0, 'y': SCALE},
+                                  {'x': SCALE, 'y': SCALE},
+                                  {'x': SCALE, 'y': 0}]},
+
+                {'node1->node2': [{'x': 0, 'y': 0},
+                                  {'x': 0, 'y': -SCALE},
+                                  {'x': SCALE, 'y': -SCALE},
+                                  {'x': SCALE, 'y': 0}]},
+
+                {'node1->node2': [{'x': 0, 'y': 0},
+                                  {'x': 0, 'y': 1.5*SCALE},
+                                  {'x': SCALE, 'y': 1.5*SCALE},
+                                  {'x': SCALE, 'y': 0}]},
             ]
 
             for available_connection in available_connections:
                 if self.get_num_branches() < self.branches_num:
-                    self.nodes_connections['node1->node2'].append(available_connection)
+                    for key, value in available_connection.items():
+                        self.nodes_connections[key].append(value)
+                else:
+                    break
+
+        if self.nodes_num == 3:
+            available_connections_stage_1 = [
+                {'node1->node2': [{'x': 0, 'y': 0},
+                                  {'x': -0.5*SCALE, 'y': 0},
+                                  {'x': -0.5*SCALE, 'y': SCALE},
+                                  {'x': 0, 'y': SCALE}]},
+
+                {'node2->node3': [{'x': 0, 'y': SCALE},
+                                  {'x': 0, 'y': 1.5*SCALE},
+                                  {'x': SCALE, 'y': 1.5*SCALE},
+                                  {'x': SCALE, 'y': SCALE}]},
+
+                {'node3->node1': [{'x': SCALE, 'y': SCALE},
+                                  {'x': 1.5*SCALE, 'y': SCALE},
+                                  {'x': 1.5*SCALE, 'y': -0.5*SCALE},
+                                  {'x': 0, 'y': -0.5*SCALE},
+                                  {'x': 0, 'y': 0}]}
+            ]
+
+            for available_connection in self.get_random_elements(available_connections_stage_1, 2):
+                if self.get_num_branches() < self.branches_num:
+                    for key, value in available_connection.items():
+                        self.nodes_connections[key].append(value)
                 else:
                     break
 
@@ -118,8 +157,6 @@ class ElectricCircuit:
 
         for node, coords in self.nodes.items():
             plt.plot(coords['x'], coords['y'], 'ko')
-
-        print(self.nodes_connections)
 
         for key, value in self.nodes_connections.items():
             for connection in value:
@@ -159,3 +196,7 @@ class ElectricCircuit:
     @staticmethod
     def get_node_coords(target_node):
         return list(target_node.values())[0]
+
+    @staticmethod
+    def get_random_elements(elements_array, elements_num):
+        return random.sample(elements_array, elements_num)
