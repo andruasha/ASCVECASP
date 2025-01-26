@@ -173,53 +173,71 @@ class ElectricCircuit:
 
             available_connections_stage_2 = available_connections_three_nodes_stage_2
 
-            vacant_connection_key = None
-            vacant_connection_value = None
+            # Соединения которые остались после stage_1
+            vacant_connections = []
 
-            for available_connection_stage1 in available_connections_stage_1:
-                for key_stage1, value_stage1 in available_connection_stage1.items():
-                    if value_stage1 not in self.nodes_connections[key_stage1]:
-                        vacant_connection_key = key_stage1
-                        vacant_connection_value = value_stage1
+            for available_connection in available_connections_stage_1:
+                for key, value in available_connection.items():
+                    if value not in self.nodes_connections[key]:
+                        vacant_connections.append({key: value})
 
-            child_of_vacant_connection_key = None
-            child_of_vacant_connection_value = None
+            childs_of_vacant_connections = []
 
-            for available_connection_stage_2 in available_connections_stage_2:
-                for key_stage_2, value_stage_2 in available_connection_stage_2.items():
-                    if key_stage_2 == vacant_connection_key:
-                        child_of_vacant_connection_key = key_stage_2
-                        child_of_vacant_connection_value = value_stage_2
-                        available_connection_stage_2[key_stage_2] = vacant_connection_value
-                        break
+            for available_connection in available_connections_stage_2:
+                for key_available, value_available in available_connection.items():
+                    for vacant_connection in vacant_connections:
+                        for key_vacant, value_vacant in vacant_connection.items():
+                            if key_vacant == key_available:
+                                childs_of_vacant_connections.append({key_available: value_available})
+                                available_connection[key_available] = value_vacant
 
             while self.get_num_branches() < self.branches_num:
 
-                available_connection = get_random_elements(available_connections_stage_2, 1)[0]
-                available_connection_key = None
-                available_connection_value = None
+                random_available_connection = get_random_elements(available_connections_stage_2, 1)[0]
+                random_available_connection_key = None
+                random_available_connection_value = None
 
-                for key, value in available_connection.items():
-                    available_connection_key = key
-                    available_connection_value = value
+                for key, value in random_available_connection.items():
+                    random_available_connection_key = key
+                    random_available_connection_value = value
 
-                if available_connection_key == child_of_vacant_connection_key:
-                    self.nodes_connections[available_connection_key].append(available_connection_value)
+                childs_of_vacant_connections_keys = []
+                for child_of_vacant_connection in childs_of_vacant_connections:
+                    for key, value in child_of_vacant_connection.items():
+                        childs_of_vacant_connections_keys.append(key)
+
+                if random_available_connection_key in childs_of_vacant_connections_keys:
+
+                    child_of_vacant_connection_value = None
+                    for child_of_vacant_connection in childs_of_vacant_connections:
+                        for key, value in child_of_vacant_connection.items():
+                            if key == random_available_connection_key:
+                                child_of_vacant_connection_value = value
+
+                    vacant_connection_value = None
+                    for vacant_connection in vacant_connections:
+                        for key, value in vacant_connection.items():
+                            if key == random_available_connection_key:
+                                vacant_connection_value = value
+
+                    self.nodes_connections[random_available_connection_key].append(vacant_connection_value)
 
                     for available_connection_stage_2 in available_connections_stage_2:
-                        for key_stage2, value_stage2 in available_connection_stage_2.items():
-                            if key_stage2 == child_of_vacant_connection_key:
-                                available_connection_stage_2[key_stage2] = child_of_vacant_connection_value
+                        for key, value in available_connection_stage_2.items():
+                            if key == random_available_connection_key:
+                                available_connection_stage_2[key] = child_of_vacant_connection_value
 
-                    child_of_vacant_connection_key = 'empty'
-                    child_of_vacant_connection_value = 'empty'
+                    for child_of_vacant_connection in childs_of_vacant_connections[:]:
+                        for key, value in child_of_vacant_connection.items():
+                            if key == random_available_connection_key:
+                                childs_of_vacant_connections.remove(child_of_vacant_connection)
 
                 else:
-                    self.nodes_connections[available_connection_key].append(available_connection_value)
+                    self.nodes_connections[random_available_connection_key].append(random_available_connection_value)
                     filtered_available_connections_stage_2 = []
                     for available_connection_stage_2 in available_connections_stage_2:
                         for key, value in available_connection_stage_2.items():
-                            if key != available_connection_key:
+                            if key != random_available_connection_key:
                                 filtered_available_connections_stage_2.append(available_connection_stage_2)
 
                     available_connections_stage_2 = filtered_available_connections_stage_2
