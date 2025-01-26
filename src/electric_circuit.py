@@ -46,47 +46,105 @@ class ElectricCircuit:
         return near_nodes
 
     def create_nodes_connections(self):
-        def generate_neighbour_coords(node_coords, scale):
-            return {
-                'left': {'x': node_coords['x'] - scale, 'y': node_coords['y']},
-                'upper_left': {'x': node_coords['x'] - scale, 'y': node_coords['y'] + scale},
-                'upper': {'x': node_coords['x'], 'y': node_coords['y'] + scale},
-                'upper_right': {'x': node_coords['x'] + scale, 'y': node_coords['y'] + scale},
-                'right': {'x': node_coords['x'] + scale, 'y': node_coords['y']},
-                'down_right': {'x': node_coords['x'] + scale, 'y': node_coords['y'] - scale},
-                'down': {'x': node_coords['x'], 'y': node_coords['y'] - scale},
-                'down_left': {'x': node_coords['x'] - scale, 'y': node_coords['y'] - scale},
-            }
-
-        def add_connection_if_needed(coord1, coord2, missing_coord, key_prefix):
-            if (self.check_exist_node(coord1) and
-                    self.check_exist_node(coord2) and
-                    not self.check_exist_node(missing_coord)):
-                node1 = self.get_name_by_coords(coord1)
-                node2 = self.get_name_by_coords(coord2)
-                connection_key = f"{node1}->{node2}"
-                if connection_key not in self.nodes_connections:
-                    self.nodes_connections[connection_key] = [[coord1, missing_coord, coord2]]
-
         for node_name, node_coords in self.nodes.items():
             near_nodes = self.find_near_node(node_coords)
             for near_node in near_nodes:
                 for key, value in near_node.items():
-                    connection_key = f"{node_name}->{key}"
-                    reverse_key = f"{key}->{node_name}"
-                    if connection_key not in self.nodes_connections and reverse_key not in self.nodes_connections:
-                        self.nodes_connections[connection_key] = [[node_coords, value]]
+                    if (((node_name + '->' + key) not in self.nodes_connections) and
+                            ((key + '->' + node_name) not in self.nodes_connections)):
+                        self.nodes_connections[node_name + '->' + key] = [[node_coords, value]]
 
-            neighbours = generate_neighbour_coords(node_coords, SCALE)
+        for node_name, node_coords in self.nodes.items():
 
-            add_connection_if_needed(neighbours['left'], neighbours['upper'],
-                                     neighbours['upper_left'], "ul")
-            add_connection_if_needed(neighbours['upper'], neighbours['right'],
-                                     neighbours['upper_right'], "ur")
-            add_connection_if_needed(neighbours['right'], neighbours['down'],
-                                     neighbours['down_right'], "dr")
-            add_connection_if_needed(neighbours['down'], neighbours['left'],
-                                     neighbours['down_left'], "dl")
+            left_neighbour_coords = {'x': node_coords['x'] - SCALE, 'y': node_coords['y']}
+            upper_left_neighbour_coords = {'x': node_coords['x'] - SCALE, 'y': node_coords['y'] + SCALE}
+            upper_neighbour_coords = {'x': node_coords['x'], 'y': node_coords['y'] + SCALE}
+            upper_right_neighbour_coords = {'x': node_coords['x'] + SCALE, 'y': node_coords['y'] + SCALE}
+            right_neighbour_coords = {'x': node_coords['x'] + SCALE, 'y': node_coords['y']}
+            down_right_neighbour_coords = {'x': node_coords['x'] + SCALE, 'y': node_coords['y'] - SCALE}
+            down_neighbour_coords = {'x': node_coords['x'], 'y': node_coords['y'] - SCALE}
+            down_left_neighbour_coords = {'x': node_coords['x'] - SCALE, 'y': node_coords['y'] - SCALE}
+
+            if ((self.check_exist_node(left_neighbour_coords) and
+                 self.check_exist_node(upper_neighbour_coords)) and
+                    (not self.check_exist_node(upper_left_neighbour_coords))):
+                self.nodes_connections[
+                    self.get_name_by_coords(left_neighbour_coords) + '->' + self.get_name_by_coords(upper_neighbour_coords)] = [
+                    [left_neighbour_coords, upper_left_neighbour_coords, upper_neighbour_coords]]
+
+            if ((self.check_exist_node(upper_neighbour_coords) and
+                 self.check_exist_node(right_neighbour_coords)) and
+                    (not self.check_exist_node(upper_right_neighbour_coords))):
+                self.nodes_connections[
+                    self.get_name_by_coords(upper_neighbour_coords) + '->' + self.get_name_by_coords(right_neighbour_coords)] = [
+                    [upper_neighbour_coords, upper_right_neighbour_coords, right_neighbour_coords]]
+
+            if ((self.check_exist_node(right_neighbour_coords) and
+                 self.check_exist_node(down_neighbour_coords)) and
+                    (not self.check_exist_node(down_right_neighbour_coords))):
+                self.nodes_connections[
+                    self.get_name_by_coords(right_neighbour_coords) + '->' + self.get_name_by_coords(down_neighbour_coords)] = [
+                    [right_neighbour_coords, down_right_neighbour_coords, down_neighbour_coords]]
+
+            if ((self.check_exist_node(down_neighbour_coords) and
+                 self.check_exist_node(left_neighbour_coords)) and
+                    (not self.check_exist_node(down_left_neighbour_coords))):
+                self.nodes_connections[
+                    self.get_name_by_coords(down_neighbour_coords) + '->' + self.get_name_by_coords(left_neighbour_coords)] = [
+                    [down_neighbour_coords, down_left_neighbour_coords, left_neighbour_coords]]
+
+        available_connections_two_nodes = [
+            {'node1->node2': [{'x': 0, 'y': 0},
+                              {'x': 0, 'y': SCALE},
+                              {'x': SCALE, 'y': SCALE},
+                              {'x': SCALE, 'y': 0}]},
+
+            {'node1->node2': [{'x': 0, 'y': 0},
+                              {'x': 0, 'y': -SCALE},
+                              {'x': SCALE, 'y': -SCALE},
+                              {'x': SCALE, 'y': 0}]},
+
+            {'node1->node2': [{'x': 0, 'y': 0},
+                              {'x': 0, 'y': 1.5 * SCALE},
+                              {'x': SCALE, 'y': 1.5 * SCALE},
+                              {'x': SCALE, 'y': 0}]},
+        ]
+
+        available_connections_three_nodes_stage_1 = [
+            {'node1->node2': [{'x': 0, 'y': 0},
+                              {'x': -0.5*SCALE, 'y': 0},
+                              {'x': -0.5*SCALE, 'y': SCALE},
+                              {'x': 0, 'y': SCALE}]},
+
+            {'node2->node3': [{'x': 0, 'y': SCALE},
+                              {'x': 0, 'y': 1.5*SCALE},
+                              {'x': SCALE, 'y': 1.5*SCALE},
+                              {'x': SCALE, 'y': SCALE}]},
+
+            {'node3->node1': [{'x': SCALE, 'y': SCALE},
+                              {'x': 1.5*SCALE, 'y': SCALE},
+                              {'x': 1.5*SCALE, 'y': -0.5*SCALE},
+                              {'x': 0, 'y': -0.5*SCALE},
+                              {'x': 0, 'y': 0}]}
+        ]
+
+        available_connections_three_nodes_stage_2 = [
+            {'node1->node2': [{'x': 0, 'y': 0},
+                              {'x': -SCALE, 'y': 0},
+                              {'x': -SCALE, 'y': SCALE},
+                              {'x': 0, 'y': SCALE}]},
+
+            {'node2->node3': [{'x': 0, 'y': SCALE},
+                              {'x': 0, 'y': 2 * SCALE},
+                              {'x': SCALE, 'y': 2 * SCALE},
+                              {'x': SCALE, 'y': SCALE}]},
+
+            {'node3->node1': [{'x': SCALE, 'y': SCALE},
+                              {'x': 2 * SCALE, 'y': SCALE},
+                              {'x': 2 * SCALE, 'y': -SCALE},
+                              {'x': 0, 'y': -SCALE},
+                              {'x': 0, 'y': 0}]}
+        ]
 
         if self.nodes_num == 2:
             self.nodes_connections['node1->node2'].append([{'x': 0, 'y': 0},
@@ -99,24 +157,7 @@ class ElectricCircuit:
                                                            {'x': SCALE, 'y': -0.5*SCALE},
                                                            {'x': SCALE, 'y': 0}])
 
-            available_connections = [
-                {'node1->node2': [{'x': 0, 'y': 0},
-                                  {'x': 0, 'y': SCALE},
-                                  {'x': SCALE, 'y': SCALE},
-                                  {'x': SCALE, 'y': 0}]},
-
-                {'node1->node2': [{'x': 0, 'y': 0},
-                                  {'x': 0, 'y': -SCALE},
-                                  {'x': SCALE, 'y': -SCALE},
-                                  {'x': SCALE, 'y': 0}]},
-
-                {'node1->node2': [{'x': 0, 'y': 0},
-                                  {'x': 0, 'y': 1.5*SCALE},
-                                  {'x': SCALE, 'y': 1.5*SCALE},
-                                  {'x': SCALE, 'y': 0}]},
-            ]
-
-            for available_connection in available_connections:
+            for available_connection in available_connections_two_nodes:
                 if self.get_num_branches() < self.branches_num:
                     for key, value in available_connection.items():
                         self.nodes_connections[key].append(value)
@@ -124,45 +165,13 @@ class ElectricCircuit:
                     break
 
         if self.nodes_num == 3:
-            available_connections_stage_1 = [
-                {'node1->node2': [{'x': 0, 'y': 0},
-                                  {'x': -0.5*SCALE, 'y': 0},
-                                  {'x': -0.5*SCALE, 'y': SCALE},
-                                  {'x': 0, 'y': SCALE}]},
-
-                {'node2->node3': [{'x': 0, 'y': SCALE},
-                                  {'x': 0, 'y': 1.5*SCALE},
-                                  {'x': SCALE, 'y': 1.5*SCALE},
-                                  {'x': SCALE, 'y': SCALE}]},
-
-                {'node3->node1': [{'x': SCALE, 'y': SCALE},
-                                  {'x': 1.5*SCALE, 'y': SCALE},
-                                  {'x': 1.5*SCALE, 'y': -0.5*SCALE},
-                                  {'x': 0, 'y': -0.5*SCALE},
-                                  {'x': 0, 'y': 0}]}
-            ]
+            available_connections_stage_1 = available_connections_three_nodes_stage_1
 
             for available_connection_stage1 in get_random_elements(available_connections_stage_1, 2):
                 for key_stage1, value_stage1 in available_connection_stage1.items():
                     self.nodes_connections[key_stage1].append(value_stage1)
 
-            available_connections_stage_2 = [
-                {'node1->node2': [{'x': 0, 'y': 0},
-                                  {'x': -SCALE, 'y': 0},
-                                  {'x': -SCALE, 'y': SCALE},
-                                  {'x': 0, 'y': SCALE}]},
-
-                {'node2->node3': [{'x': 0, 'y': SCALE},
-                                  {'x': 0, 'y': 2*SCALE},
-                                  {'x': SCALE, 'y': 2*SCALE},
-                                  {'x': SCALE, 'y': SCALE}]},
-
-                {'node3->node1': [{'x': SCALE, 'y': SCALE},
-                                  {'x': 2*SCALE, 'y': SCALE},
-                                  {'x': 2*SCALE, 'y': -SCALE},
-                                  {'x': 0, 'y': -SCALE},
-                                  {'x': 0, 'y': 0}]}
-            ]
+            available_connections_stage_2 = available_connections_three_nodes_stage_2
 
             vacant_connection_key = None
             vacant_connection_value = None
