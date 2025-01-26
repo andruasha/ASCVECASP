@@ -5,6 +5,18 @@ import matplotlib.patches as patches
 import random
 
 
+def get_random_elements(elements_array, elements_num):
+    return random.sample(elements_array, elements_num)
+
+
+def get_node_name(target_node):
+    return list(target_node.keys())[0]
+
+
+def get_node_coords(target_node):
+    return list(target_node.values())[0]
+
+
 class ElectricCircuit:
 
     def __init__(self, branches_num, nodes):
@@ -130,12 +142,78 @@ class ElectricCircuit:
                                   {'x': 0, 'y': 0}]}
             ]
 
-            for available_connection in self.get_random_elements(available_connections_stage_1, 2):
-                if self.get_num_branches() < self.branches_num:
-                    for key, value in available_connection.items():
-                        self.nodes_connections[key].append(value)
+            for available_connection_stage1 in get_random_elements(available_connections_stage_1, 2):
+                for key_stage1, value_stage1 in available_connection_stage1.items():
+                    self.nodes_connections[key_stage1].append(value_stage1)
+
+            available_connections_stage_2 = [
+                {'node1->node2': [{'x': 0, 'y': 0},
+                                  {'x': -SCALE, 'y': 0},
+                                  {'x': -SCALE, 'y': SCALE},
+                                  {'x': 0, 'y': SCALE}]},
+
+                {'node2->node3': [{'x': 0, 'y': SCALE},
+                                  {'x': 0, 'y': 2*SCALE},
+                                  {'x': SCALE, 'y': 2*SCALE},
+                                  {'x': SCALE, 'y': SCALE}]},
+
+                {'node3->node1': [{'x': SCALE, 'y': SCALE},
+                                  {'x': 2*SCALE, 'y': SCALE},
+                                  {'x': 2*SCALE, 'y': -SCALE},
+                                  {'x': 0, 'y': -SCALE},
+                                  {'x': 0, 'y': 0}]}
+            ]
+
+            vacant_connection_key = None
+            vacant_connection_value = None
+
+            for available_connection_stage1 in available_connections_stage_1:
+                for key_stage1, value_stage1 in available_connection_stage1.items():
+                    if value_stage1 not in self.nodes_connections[key_stage1]:
+                        vacant_connection_key = key_stage1
+                        vacant_connection_value = value_stage1
+
+            child_of_vacant_connection_key = None
+            child_of_vacant_connection_value = None
+
+            for available_connection_stage_2 in available_connections_stage_2:
+                for key_stage_2, value_stage_2 in available_connection_stage_2.items():
+                    if key_stage_2 == vacant_connection_key:
+                        child_of_vacant_connection_key = key_stage_2
+                        child_of_vacant_connection_value = value_stage_2
+                        available_connection_stage_2[key_stage_2] = vacant_connection_value
+                        break
+
+            while self.get_num_branches() < self.branches_num:
+
+                available_connection = get_random_elements(available_connections_stage_2, 1)[0]
+                available_connection_key = None
+                available_connection_value = None
+
+                for key, value in available_connection.items():
+                    available_connection_key = key
+                    available_connection_value = value
+
+                if available_connection_key == child_of_vacant_connection_key:
+                    self.nodes_connections[available_connection_key].append(available_connection_value)
+
+                    for available_connection_stage_2 in available_connections_stage_2:
+                        for key_stage2, value_stage2 in available_connection_stage_2.items():
+                            if key_stage2 == child_of_vacant_connection_key:
+                                available_connection_stage_2[key_stage2] = child_of_vacant_connection_value
+
+                    child_of_vacant_connection_key = 'empty'
+                    child_of_vacant_connection_value = 'empty'
+
                 else:
-                    break
+                    self.nodes_connections[available_connection_key].append(available_connection_value)
+                    filtered_available_connections_stage_2 = []
+                    for available_connection_stage_2 in available_connections_stage_2:
+                        for key, value in available_connection_stage_2.items():
+                            if key != available_connection_key:
+                                filtered_available_connections_stage_2.append(available_connection_stage_2)
+
+                    available_connections_stage_2 = filtered_available_connections_stage_2
 
     def get_num_of_connected_nodes(self, target_node):
         connected_nodes = []
@@ -188,15 +266,3 @@ class ElectricCircuit:
         for key, value in self.nodes_connections.items():
             num_branches = num_branches + len(value)
         return num_branches
-
-    @staticmethod
-    def get_node_name(target_node):
-        return list(target_node.keys())[0]
-
-    @staticmethod
-    def get_node_coords(target_node):
-        return list(target_node.values())[0]
-
-    @staticmethod
-    def get_random_elements(elements_array, elements_num):
-        return random.sample(elements_array, elements_num)
