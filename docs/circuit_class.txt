@@ -1,0 +1,20 @@
+nodes_connections:
+    type: dictionary
+    data example:
+        {
+            'node1->node2': [[{'x': 0, 'y': 5}, {'x': 5, 'y': 5}]],
+            'node2->node3': [[{'x': 5, 'y': 5}, {'x': 10, 'y': 5}]],
+            'node2->node4': [[{'x': 5, 'y': 5}, {'x': 5, 'y': 0}]],
+            'node3->node4': [[{'x': 10, 'y': 5}, {'x': 10, 'y': 0}, {'x': 5, 'y': 0}]],
+            'node4->node1': [[{'x': 5, 'y': 0}, {'x': 0, 'y': 0}, {'x': 0, 'y': 5}]]
+        }
+
+nodes:
+    type: dictionary
+    data example:
+        {
+            'node1': {'x': 0, 'y': 5},
+            'node2': {'x': 5, 'y': 5},
+            'node3': {'x': 10, 'y': 5},
+            'node4': {'x': 5, 'y': 0}
+        }

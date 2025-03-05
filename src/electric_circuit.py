@@ -171,76 +171,78 @@ class ElectricCircuit:
                 for key_stage1, value_stage1 in available_connection_stage1.items():
                     self.nodes_connections[key_stage1].append(value_stage1)
 
-            available_connections_stage_2 = available_connections_three_nodes_stage_2
+            self.connect_two_nodes(self.nodes['node1'], self.nodes['node3'])
 
-            # Соединения которые остались после stage_1
-            vacant_connections = []
-
-            for available_connection in available_connections_stage_1:
-                for key, value in available_connection.items():
-                    if value not in self.nodes_connections[key]:
-                        vacant_connections.append({key: value})
-
-            childs_of_vacant_connections = []
-
-            for available_connection in available_connections_stage_2:
-                for key_available, value_available in available_connection.items():
-                    for vacant_connection in vacant_connections:
-                        for key_vacant, value_vacant in vacant_connection.items():
-                            if key_vacant == key_available:
-                                childs_of_vacant_connections.append({key_available: value_available})
-                                available_connection[key_available] = value_vacant
-
-            while self.get_num_branches() < self.branches_num:
-
-                random_available_connection = get_random_elements(available_connections_stage_2, 1)[0]
-                random_available_connection_key = None
-                random_available_connection_value = None
-
-                for key, value in random_available_connection.items():
-                    random_available_connection_key = key
-                    random_available_connection_value = value
-
-                childs_of_vacant_connections_keys = []
-                for child_of_vacant_connection in childs_of_vacant_connections:
-                    for key, value in child_of_vacant_connection.items():
-                        childs_of_vacant_connections_keys.append(key)
-
-                if random_available_connection_key in childs_of_vacant_connections_keys:
-
-                    child_of_vacant_connection_value = None
-                    for child_of_vacant_connection in childs_of_vacant_connections:
-                        for key, value in child_of_vacant_connection.items():
-                            if key == random_available_connection_key:
-                                child_of_vacant_connection_value = value
-
-                    vacant_connection_value = None
-                    for vacant_connection in vacant_connections:
-                        for key, value in vacant_connection.items():
-                            if key == random_available_connection_key:
-                                vacant_connection_value = value
-
-                    self.nodes_connections[random_available_connection_key].append(vacant_connection_value)
-
-                    for available_connection_stage_2 in available_connections_stage_2:
-                        for key, value in available_connection_stage_2.items():
-                            if key == random_available_connection_key:
-                                available_connection_stage_2[key] = child_of_vacant_connection_value
-
-                    for child_of_vacant_connection in childs_of_vacant_connections[:]:
-                        for key, value in child_of_vacant_connection.items():
-                            if key == random_available_connection_key:
-                                childs_of_vacant_connections.remove(child_of_vacant_connection)
-
-                else:
-                    self.nodes_connections[random_available_connection_key].append(random_available_connection_value)
-                    filtered_available_connections_stage_2 = []
-                    for available_connection_stage_2 in available_connections_stage_2:
-                        for key, value in available_connection_stage_2.items():
-                            if key != random_available_connection_key:
-                                filtered_available_connections_stage_2.append(available_connection_stage_2)
-
-                    available_connections_stage_2 = filtered_available_connections_stage_2
+            # available_connections_stage_2 = available_connections_three_nodes_stage_2
+            #
+            # # Соединения которые остались после stage_1
+            # vacant_connections = []
+            #
+            # for available_connection in available_connections_stage_1:
+            #     for key, value in available_connection.items():
+            #         if value not in self.nodes_connections[key]:
+            #             vacant_connections.append({key: value})
+            #
+            # childs_of_vacant_connections = []
+            #
+            # for available_connection in available_connections_stage_2:
+            #     for key_available, value_available in available_connection.items():
+            #         for vacant_connection in vacant_connections:
+            #             for key_vacant, value_vacant in vacant_connection.items():
+            #                 if key_vacant == key_available:
+            #                     childs_of_vacant_connections.append({key_available: value_available})
+            #                     available_connection[key_available] = value_vacant
+            #
+            # while self.get_num_branches() < self.branches_num:
+            #
+            #     random_available_connection = get_random_elements(available_connections_stage_2, 1)[0]
+            #     random_available_connection_key = None
+            #     random_available_connection_value = None
+            #
+            #     for key, value in random_available_connection.items():
+            #         random_available_connection_key = key
+            #         random_available_connection_value = value
+            #
+            #     childs_of_vacant_connections_keys = []
+            #     for child_of_vacant_connection in childs_of_vacant_connections:
+            #         for key, value in child_of_vacant_connection.items():
+            #             childs_of_vacant_connections_keys.append(key)
+            #
+            #     if random_available_connection_key in childs_of_vacant_connections_keys:
+            #
+            #         child_of_vacant_connection_value = None
+            #         for child_of_vacant_connection in childs_of_vacant_connections:
+            #             for key, value in child_of_vacant_connection.items():
+            #                 if key == random_available_connection_key:
+            #                     child_of_vacant_connection_value = value
+            #
+            #         vacant_connection_value = None
+            #         for vacant_connection in vacant_connections:
+            #             for key, value in vacant_connection.items():
+            #                 if key == random_available_connection_key:
+            #                     vacant_connection_value = value
+            #
+            #         self.nodes_connections[random_available_connection_key].append(vacant_connection_value)
+            #
+            #         for available_connection_stage_2 in available_connections_stage_2:
+            #             for key, value in available_connection_stage_2.items():
+            #                 if key == random_available_connection_key:
+            #                     available_connection_stage_2[key] = child_of_vacant_connection_value
+            #
+            #         for child_of_vacant_connection in childs_of_vacant_connections[:]:
+            #             for key, value in child_of_vacant_connection.items():
+            #                 if key == random_available_connection_key:
+            #                     childs_of_vacant_connections.remove(child_of_vacant_connection)
+            #
+            #     else:
+            #         self.nodes_connections[random_available_connection_key].append(random_available_connection_value)
+            #         filtered_available_connections_stage_2 = []
+            #         for available_connection_stage_2 in available_connections_stage_2:
+            #             for key, value in available_connection_stage_2.items():
+            #                 if key != random_available_connection_key:
+            #                     filtered_available_connections_stage_2.append(available_connection_stage_2)
+            #
+            #         available_connections_stage_2 = filtered_available_connections_stage_2
 
     def get_num_of_connected_nodes(self, target_node):
         connected_nodes = []
@@ -260,6 +262,8 @@ class ElectricCircuit:
         plt.ylim(-13, 13)
         # plt.axis('equal')
 
+        bounds = self.find_bounds()
+
         for node, coords in self.nodes.items():
             plt.plot(coords['x'], coords['y'], 'ko')
 
@@ -270,7 +274,65 @@ class ElectricCircuit:
                         plt.plot([connection[i]['x'], connection[i + 1]['x']],
                                  [connection[i]['y'], connection[i + 1]['y']], 'k-')
 
+        # plt.plot([bounds['left'], bounds['right'], bounds['right'], bounds['left'], bounds['left']],
+        #          [bounds['top'], bounds['top'], bounds['bottom'], bounds['bottom'], bounds['top']], 'r-')
+
         plt.show()
+
+    def find_bounds(self):
+        min_x = float('inf')
+        max_x = float('-inf')
+        min_y = float('inf')
+        max_y = float('-inf')
+
+        for path in self.nodes_connections.values():
+            for segment in path:
+                for point in segment:
+                    x = point['x']
+                    y = point['y']
+
+                    if x < min_x:
+                        min_x = x
+                    if x > max_x:
+                        max_x = x
+                    if y < min_y:
+                        min_y = y
+                    if y > max_y:
+                        max_y = y
+
+        return {
+            'left': min_x,
+            'right': max_x,
+            'bottom': min_y,
+            'top': max_y
+        }
+
+    def connect_two_nodes(self, node1, node2):
+        bounds = self.find_bounds()
+
+        if (node1['x'] == node2['x']) or (node1['y'] == node2['y']):
+            pass
+
+        elif (node1['x'] > node2['x']) and (node1['y'] > node2['y']):
+            pass
+
+        elif (node1['x'] > node2['x']) and (node1['y'] < node2['y']):
+            pass
+
+        # our case
+        elif (node1['x'] < node2['x']) and (node1['y'] < node2['y']):
+            self.nodes_connections[self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)] = [
+                [
+                    node1,
+                    {'x': bounds['left'] - SCALE/2, 'y': node1['y']},
+                    {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE/2},
+                    {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
+                    node2
+                 ]
+            ]
+
+        elif (node1['x'] < node2['x']) and (node1['y'] > node2['y']):
+            pass
 
     def get_coords_by_name(self, node_name):
         for key, value in self.nodes.items():

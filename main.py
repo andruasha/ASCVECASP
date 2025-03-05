@@ -22,4 +22,6 @@ template_four_nodes_2 = {'node1': {'x': 0, 'y': SCALE},
 circuit = ElectricCircuit(8, template_three_nodes_1)
 
 circuit.create_nodes_connections()
+
+print(circuit.nodes_connections)
 circuit.visualise_circuit()
