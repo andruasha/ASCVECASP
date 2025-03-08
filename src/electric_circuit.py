@@ -1,12 +1,16 @@
 from conf.config import SCALE
 
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import random
+import secrets
+import copy
+from itertools import combinations
 
 
 def get_random_elements(elements_array, elements_num):
-    return random.sample(elements_array, elements_num)
+    if len(elements_array) < elements_num:
+        raise ValueError("Недостаточно элементов в списке для выборки")
+    return secrets.SystemRandom().sample(elements_array, elements_num)
 
 
 def get_node_name(target_node):
@@ -110,42 +114,6 @@ class ElectricCircuit:
                               {'x': SCALE, 'y': 0}]},
         ]
 
-        available_connections_three_nodes_stage_1 = [
-            {'node1->node2': [{'x': 0, 'y': 0},
-                              {'x': -0.5*SCALE, 'y': 0},
-                              {'x': -0.5*SCALE, 'y': SCALE},
-                              {'x': 0, 'y': SCALE}]},
-
-            {'node2->node3': [{'x': 0, 'y': SCALE},
-                              {'x': 0, 'y': 1.5*SCALE},
-                              {'x': SCALE, 'y': 1.5*SCALE},
-                              {'x': SCALE, 'y': SCALE}]},
-
-            {'node3->node1': [{'x': SCALE, 'y': SCALE},
-                              {'x': 1.5*SCALE, 'y': SCALE},
-                              {'x': 1.5*SCALE, 'y': -0.5*SCALE},
-                              {'x': 0, 'y': -0.5*SCALE},
-                              {'x': 0, 'y': 0}]}
-        ]
-
-        available_connections_three_nodes_stage_2 = [
-            {'node1->node2': [{'x': 0, 'y': 0},
-                              {'x': -SCALE, 'y': 0},
-                              {'x': -SCALE, 'y': SCALE},
-                              {'x': 0, 'y': SCALE}]},
-
-            {'node2->node3': [{'x': 0, 'y': SCALE},
-                              {'x': 0, 'y': 2 * SCALE},
-                              {'x': SCALE, 'y': 2 * SCALE},
-                              {'x': SCALE, 'y': SCALE}]},
-
-            {'node3->node1': [{'x': SCALE, 'y': SCALE},
-                              {'x': 2 * SCALE, 'y': SCALE},
-                              {'x': 2 * SCALE, 'y': -SCALE},
-                              {'x': 0, 'y': -SCALE},
-                              {'x': 0, 'y': 0}]}
-        ]
-
         if self.nodes_num == 2:
             self.nodes_connections['node1->node2'].append([{'x': 0, 'y': 0},
                                                            {'x': 0, 'y': 0.5*SCALE},
@@ -164,94 +132,76 @@ class ElectricCircuit:
                 else:
                     break
 
-        if self.nodes_num == 3:
-            available_connections_stage_1 = available_connections_three_nodes_stage_1
+        backup = copy.deepcopy(self.nodes_connections)
 
-            for available_connection_stage1 in get_random_elements(available_connections_stage_1, 2):
-                for key_stage1, value_stage1 in available_connection_stage1.items():
-                    self.nodes_connections[key_stage1].append(value_stage1)
+        while True:
+            revert_flag = False
+            self.nodes_connections = copy.deepcopy(backup)
 
-            self.connect_two_nodes(self.nodes['node1'], self.nodes['node3'])
+            while self.get_num_branches() < self.branches_num:
 
-            # available_connections_stage_2 = available_connections_three_nodes_stage_2
-            #
-            # # Соединения которые остались после stage_1
-            # vacant_connections = []
-            #
-            # for available_connection in available_connections_stage_1:
-            #     for key, value in available_connection.items():
-            #         if value not in self.nodes_connections[key]:
-            #             vacant_connections.append({key: value})
-            #
-            # childs_of_vacant_connections = []
-            #
-            # for available_connection in available_connections_stage_2:
-            #     for key_available, value_available in available_connection.items():
-            #         for vacant_connection in vacant_connections:
-            #             for key_vacant, value_vacant in vacant_connection.items():
-            #                 if key_vacant == key_available:
-            #                     childs_of_vacant_connections.append({key_available: value_available})
-            #                     available_connection[key_available] = value_vacant
-            #
-            # while self.get_num_branches() < self.branches_num:
-            #
-            #     random_available_connection = get_random_elements(available_connections_stage_2, 1)[0]
-            #     random_available_connection_key = None
-            #     random_available_connection_value = None
-            #
-            #     for key, value in random_available_connection.items():
-            #         random_available_connection_key = key
-            #         random_available_connection_value = value
-            #
-            #     childs_of_vacant_connections_keys = []
-            #     for child_of_vacant_connection in childs_of_vacant_connections:
-            #         for key, value in child_of_vacant_connection.items():
-            #             childs_of_vacant_connections_keys.append(key)
-            #
-            #     if random_available_connection_key in childs_of_vacant_connections_keys:
-            #
-            #         child_of_vacant_connection_value = None
-            #         for child_of_vacant_connection in childs_of_vacant_connections:
-            #             for key, value in child_of_vacant_connection.items():
-            #                 if key == random_available_connection_key:
-            #                     child_of_vacant_connection_value = value
-            #
-            #         vacant_connection_value = None
-            #         for vacant_connection in vacant_connections:
-            #             for key, value in vacant_connection.items():
-            #                 if key == random_available_connection_key:
-            #                     vacant_connection_value = value
-            #
-            #         self.nodes_connections[random_available_connection_key].append(vacant_connection_value)
-            #
-            #         for available_connection_stage_2 in available_connections_stage_2:
-            #             for key, value in available_connection_stage_2.items():
-            #                 if key == random_available_connection_key:
-            #                     available_connection_stage_2[key] = child_of_vacant_connection_value
-            #
-            #         for child_of_vacant_connection in childs_of_vacant_connections[:]:
-            #             for key, value in child_of_vacant_connection.items():
-            #                 if key == random_available_connection_key:
-            #                     childs_of_vacant_connections.remove(child_of_vacant_connection)
-            #
-            #     else:
-            #         self.nodes_connections[random_available_connection_key].append(random_available_connection_value)
-            #         filtered_available_connections_stage_2 = []
-            #         for available_connection_stage_2 in available_connections_stage_2:
-            #             for key, value in available_connection_stage_2.items():
-            #                 if key != random_available_connection_key:
-            #                     filtered_available_connections_stage_2.append(available_connection_stage_2)
-            #
-            #         available_connections_stage_2 = filtered_available_connections_stage_2
+                if revert_flag:
+                    self.nodes_connections = copy.deepcopy(backup)
+                    revert_flag = False
 
-    def get_num_of_connected_nodes(self, target_node):
-        connected_nodes = []
+                locked_nodes = self.find_blocked_nodes()
+                available_nodes = []
+                for node_name, node_coords in self.nodes.items():
+                    if {node_name: node_coords} not in locked_nodes:
+                        available_nodes.append(node_coords)
 
-        for node_connection in self.nodes_connections.keys():
-            if target_node in node_connection.split('->'):
-                connected_nodes.append((set(node_connection.split('->')) - {target_node}).pop())
+                if len(available_nodes) < 2:
+                    revert_flag = True
+                else:
+                    num_unavailable_node_pairs = 0
+                    for node1, node2 in combinations(available_nodes, 2):
+                        node1_name = self.get_name_by_coords(node1)
+                        node2_name = self.get_name_by_coords(node2)
 
-        return connected_nodes
+                        if self.get_num_connections_between_nodes(node1_name, node2_name) > 2:
+                            num_unavailable_node_pairs += 1
+
+                    print(num_unavailable_node_pairs)
+                    print(len(available_nodes) * (len(available_nodes) - 1) // 2)
+
+                    if num_unavailable_node_pairs == len(available_nodes) * (len(available_nodes) - 1) // 2:
+                        revert_flag = True
+
+                if not revert_flag:
+                    while True:
+                        two_free_nodes = get_random_elements(available_nodes, 2)
+                        node1_name = self.get_name_by_coords(two_free_nodes[0])
+                        node2_name = self.get_name_by_coords(two_free_nodes[1])
+
+                        if self.get_num_connections_between_nodes(node1_name, node2_name) <= 2:
+                            break
+
+                    self.connect_two_nodes(two_free_nodes[0], two_free_nodes[1])
+
+            if all(self.count_node_connections(node) >= 3 for node in self.nodes.keys()):
+                break
+            else:
+                continue
+
+    def get_num_connections_between_nodes(self, node1_name, node2_name):
+        num_connections = 0
+
+        for connected_nodes, connection_coords in self.nodes_connections.items():
+            if (connected_nodes == (node1_name + '->' + node2_name)) or (
+                    connected_nodes == (node2_name + '->' + node1_name)):
+                num_connections += len(connection_coords)
+
+        return num_connections
+
+    def count_node_connections(self, node_name):
+        count = 0
+        for connection, paths in self.nodes_connections.items():
+            node1, node2 = connection.split('->')
+
+            if node_name == node1 or node_name == node2:
+                count += len(paths)
+
+        return count
 
     def visualise_circuit(self):
         plt.figure(figsize=(5, 5))
@@ -260,7 +210,7 @@ class ElectricCircuit:
         plt.yticks(range(-13, 14, 1))
         plt.xlim(-13, 13)
         plt.ylim(-13, 13)
-        # plt.axis('equal')
+        plt.axis('equal')
 
         bounds = self.find_bounds()
 
@@ -307,32 +257,364 @@ class ElectricCircuit:
             'top': max_y
         }
 
+    def check_node_type(self, checking_node_coords):
+        node_type = None
+
+        min_x = float('inf')
+        max_x = float('-inf')
+        min_y = float('inf')
+        max_y = float('-inf')
+
+        for node, coords in self.nodes.items():
+            if coords['x'] > max_x:
+                max_x = coords['x']
+            if coords['x'] < min_x:
+                min_x = coords['x']
+            if coords['y'] > max_y:
+                max_y = coords['y']
+            if coords['y'] < min_y:
+                min_y = coords['y']
+
+        if checking_node_coords['x'] == max_x:
+            if checking_node_coords['y'] == max_y:
+                node_type = 'upper_right'
+            elif checking_node_coords['y'] == min_y:
+                node_type = 'bottom_right'
+
+        elif checking_node_coords['x'] == min_x:
+            if checking_node_coords['y'] == max_y:
+                node_type = 'upper_left'
+            elif checking_node_coords['y'] == min_y:
+                node_type = 'bottom_left'
+
+        elif checking_node_coords['y'] == max_y:
+            node_type = 'upper_middle'
+
+        elif checking_node_coords['y'] == min_y:
+            node_type = 'bottom_middle'
+
+        return node_type
+
     def connect_two_nodes(self, node1, node2):
         bounds = self.find_bounds()
+        node1_type = self.check_node_type(node1)
+        node2_type = self.check_node_type(node2)
 
-        if (node1['x'] == node2['x']) or (node1['y'] == node2['y']):
-            pass
+        if (node1_type == 'bottom_middle') or (node2_type == 'bottom_middle'):
+            bottom_node = node1
+            not_bottom_node = node2
 
-        elif (node1['x'] > node2['x']) and (node1['y'] > node2['y']):
-            pass
+            if node2_type == 'bottom_middle':
+                bottom_node = node2
+                not_bottom_node = node1
 
-        elif (node1['x'] > node2['x']) and (node1['y'] < node2['y']):
-            pass
+            if self.check_node_type(not_bottom_node) == 'upper_left':
+                print('case 1')
+                if (self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)) in self.nodes_connections:
+                    self.nodes_connections[self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)].append(
+                        [
+                            bottom_node,
+                            {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': not_bottom_node['y']},
+                            not_bottom_node
+                        ]
+                    )
+                else:
+                    self.nodes_connections[self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)] = [
+                        [
+                            bottom_node,
+                            {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': not_bottom_node['y']},
+                            not_bottom_node
+                        ]
+                    ]
+            if self.check_node_type(not_bottom_node) == 'upper_right':
+                print('case 2')
+                if (self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)) in self.nodes_connections:
+                    self.nodes_connections[self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)].append(
+                        [
+                            bottom_node,
+                            {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['right'] + SCALE / 2, 'y': not_bottom_node['y']},
+                            not_bottom_node
+                        ]
+                    )
+                else:
+                    self.nodes_connections[self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)] = [
+                        [
+                            bottom_node,
+                            {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['right'] + SCALE / 2, 'y': not_bottom_node['y']},
+                            not_bottom_node
+                        ]
+                    ]
+        else:
+            nodes_connections_key = self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)
+            if node1['x'] == node2['x']:
+                if (node1_type == 'upper_left') or (node1_type == 'bottom_left'):
+                    print('case 3')
+                    if nodes_connections_key in self.nodes_connections:
+                        self.nodes_connections[nodes_connections_key].append(
+                            [
+                                node1,
+                                {'x': bounds['left'] - SCALE / 2, 'y': node1['y']},
+                                {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                                node2
+                            ]
+                        )
+                    else:
+                        self.nodes_connections[nodes_connections_key] = [
+                            [
+                                node1,
+                                {'x': bounds['left'] - SCALE / 2, 'y': node1['y']},
+                                {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                                node2
+                            ]
+                        ]
+                elif (node1_type == 'upper_right') or (node1_type == 'bottom_right'):
+                    print('case 4')
+                    if nodes_connections_key in self.nodes_connections:
+                        self.nodes_connections[nodes_connections_key].append(
+                            [
+                                node1,
+                                {'x': bounds['right'] + SCALE / 2, 'y': node1['y']},
+                                {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
+                                node2
+                            ]
+                        )
+                    else:
+                        self.nodes_connections[nodes_connections_key] = [
+                            [
+                                node1,
+                                {'x': bounds['right'] + SCALE / 2, 'y': node1['y']},
+                                {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
+                                node2
+                            ]
+                        ]
 
-        # our case
-        elif (node1['x'] < node2['x']) and (node1['y'] < node2['y']):
-            self.nodes_connections[self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)] = [
-                [
-                    node1,
-                    {'x': bounds['left'] - SCALE/2, 'y': node1['y']},
-                    {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE/2},
-                    {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
-                    node2
-                 ]
-            ]
+            elif node1['y'] == node2['y']:
+                if (node1_type == 'upper_left') or (node1_type == 'upper_right'):
+                    print('case 5')
+                    if nodes_connections_key in self.nodes_connections:
+                        self.nodes_connections[nodes_connections_key].append(
+                            [
+                                node1,
+                                {'x': node1['x'], 'y': bounds['top'] + SCALE/2},
+                                {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
+                                node2
+                            ]
+                        )
+                    else:
+                        self.nodes_connections[nodes_connections_key] = [
+                            [
+                                node1,
+                                {'x': node1['x'], 'y': bounds['top'] + SCALE/2},
+                                {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
+                                node2
+                            ]
+                        ]
+                elif (node1_type == 'bottom_right') or (node1_type == 'bottom_left'):
+                    print('case 6')
+                    if nodes_connections_key in self.nodes_connections:
+                        self.nodes_connections[nodes_connections_key].append(
+                            [
+                                node1,
+                                {'x': node1['x'], 'y': bounds['bottom'] - SCALE/2},
+                                {'x': node2['x'], 'y': bounds['bottom'] - SCALE/2},
+                                node2
+                            ]
+                        )
+                    else:
+                        self.nodes_connections[nodes_connections_key] = [
+                            [
+                                node1,
+                                {'x': node1['x'], 'y': bounds['bottom'] - SCALE/2},
+                                {'x': node2['x'], 'y': bounds['bottom'] - SCALE/2},
+                                node2
+                            ]
+                        ]
 
-        elif (node1['x'] < node2['x']) and (node1['y'] > node2['y']):
-            pass
+            elif (node1['x'] > node2['x']) and (node1['y'] > node2['y']):
+                print('case 7')
+                if nodes_connections_key in self.nodes_connections:
+                    self.nodes_connections[nodes_connections_key].append(
+                        [
+                            node1,
+                            {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                            node2
+                        ]
+                    )
+                else:
+                    self.nodes_connections[nodes_connections_key] = [
+                        [
+                            node1,
+                            {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                            node2
+                        ]
+                    ]
+
+            elif (node1['x'] > node2['x']) and (node1['y'] < node2['y']):
+                print('case 8')
+                if nodes_connections_key in self.nodes_connections:
+                    self.nodes_connections[nodes_connections_key].append(
+                        [
+                            node1,
+                            {'x': node1['x'], 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                            node2
+                        ]
+                    )
+                else:
+                    self.nodes_connections[nodes_connections_key] = [
+                        [
+                            node1,
+                            {'x': node1['x'], 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                            {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                            node2
+                        ]
+                    ]
+
+            elif (node1['x'] < node2['x']) and (node1['y'] < node2['y']):
+                print('case 9')
+                if nodes_connections_key in self.nodes_connections:
+                    self.nodes_connections[nodes_connections_key].append(
+                        [
+                            node1,
+                            {'x': bounds['left'] - SCALE/2, 'y': node1['y']},
+                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE/2},
+                            {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
+                            node2
+                         ]
+                    )
+                else:
+                    self.nodes_connections[nodes_connections_key] = [
+                        [
+                            node1,
+                            {'x': bounds['left'] - SCALE/2, 'y': node1['y']},
+                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE/2},
+                            {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
+                            node2
+                         ]
+                    ]
+
+            elif (node1['x'] < node2['x']) and (node1['y'] > node2['y']):
+                print('case 10')
+                if nodes_connections_key in self.nodes_connections:
+                    self.nodes_connections[nodes_connections_key].append(
+                        [
+                            node1,
+                            {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
+                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
+                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
+                            {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
+                            node2
+                        ]
+                    )
+                else:
+                    self.nodes_connections[nodes_connections_key] = [
+                        [
+                            node1,
+                            {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
+                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
+                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
+                            {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
+                            node2
+                        ]
+                    ]
+
+    def find_blocked_nodes(self):
+        def find_intersection(line1, line2):
+            A, B = line1
+            C, D = line2
+
+            if A['y'] == B['y'] and C['x'] == D['x']:
+                if (min(C['y'], D['y']) <= A['y'] <= max(C['y'], D['y']) and
+                        min(A['x'], B['x']) <= C['x'] <= max(A['x'], B['x'])):
+                    return {'x': C['x'], 'y': A['y']}
+
+            if A['x'] == B['x'] and C['y'] == D['y']:
+                if (min(A['y'], B['y']) <= C['y'] <= max(A['y'], B['y']) and
+                        min(C['x'], D['x']) <= A['x'] <= max(C['x'], D['x'])):
+                    return {'x': A['x'], 'y': C['y']}
+
+            return None
+
+        contour_lines = []
+        locked_nodes = []
+
+        for key, value in self.nodes_connections.items():
+            for connection in value:
+                for i in range(0, len(connection)):
+                    if i + 1 < len(connection):
+                        contour_lines.append(
+                            [
+                                {'x': connection[i]['x'], 'y': connection[i]['y']},
+                                {'x': connection[i + 1]['x'], 'y': connection[i + 1]['y']}
+                            ]
+                        )
+
+        contour_lines_tails = []
+        for contour_line in contour_lines:
+            contour_lines_tails.append(contour_line[0])
+
+        for node, coords in self.nodes.items():
+
+            node_type = self.check_node_type(coords)
+
+            if node_type == 'upper_left':
+                node_lines = [
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': 100 * SCALE}],  # вверх
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': -100 * SCALE, 'y': coords['y']}]  # влево
+                ]
+
+            elif node_type == 'bottom_left':
+                node_lines = [
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': -100 * SCALE}], #вниз
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': -100 * SCALE, 'y': coords['y']}]  # влево
+                ]
+
+            elif node_type == 'upper_right':
+                node_lines = [
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': 100 * SCALE}],  # вверх
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': 100 * SCALE, 'y': coords['y']}],  # вправо
+                ]
+
+            elif node_type == 'bottom_right':
+                node_lines = [
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': -100 * SCALE}], #вниз
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': 100 * SCALE, 'y': coords['y']}],  # вправо
+                ]
+
+            elif node_type == 'upper_middle':
+                node_lines = [
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': 100 * SCALE}] # вверх
+                ]
+
+            elif node_type == 'bottom_middle':
+                node_lines = [
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': -100 * SCALE}], #вниз
+                ]
+
+            for node_line in node_lines:
+                for contour_line in contour_lines:
+                    intersection_dot = find_intersection(node_line, contour_line)
+                    if intersection_dot:
+                        contour_line_tails = [contour_line[0], contour_line[1]]
+                        if not (intersection_dot in contour_line_tails):
+                            if node not in locked_nodes:
+                                locked_nodes.append({node: coords})
+
+        return locked_nodes
 
     def get_coords_by_name(self, node_name):
         for key, value in self.nodes.items():
