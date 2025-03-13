@@ -8,17 +8,7 @@ from itertools import combinations
 
 
 def get_random_elements(elements_array, elements_num):
-    if len(elements_array) < elements_num:
-        raise ValueError("Недостаточно элементов в списке для выборки")
     return secrets.SystemRandom().sample(elements_array, elements_num)
-
-
-def get_node_name(target_node):
-    return list(target_node.keys())[0]
-
-
-def get_node_coords(target_node):
-    return list(target_node.values())[0]
 
 
 class ElectricCircuit:
@@ -43,7 +33,7 @@ class ElectricCircuit:
             target_coords = {'x': nodes['x'] + direction['x'],
                              'y': nodes['y'] + direction['y']}
             if target_coords in self.nodes.values():
-                key = next((k for k, v in self.nodes.items() if v == target_coords), None)
+                key = next((node_name for node_name, node_coords in self.nodes.items() if node_coords == target_coords), None)
                 if key:
                     near_nodes.append({key: target_coords})
 
@@ -97,41 +87,6 @@ class ElectricCircuit:
                     self.get_name_by_coords(down_neighbour_coords) + '->' + self.get_name_by_coords(left_neighbour_coords)] = [
                     [down_neighbour_coords, down_left_neighbour_coords, left_neighbour_coords]]
 
-        available_connections_two_nodes = [
-            {'node1->node2': [{'x': 0, 'y': 0},
-                              {'x': 0, 'y': SCALE},
-                              {'x': SCALE, 'y': SCALE},
-                              {'x': SCALE, 'y': 0}]},
-
-            {'node1->node2': [{'x': 0, 'y': 0},
-                              {'x': 0, 'y': -SCALE},
-                              {'x': SCALE, 'y': -SCALE},
-                              {'x': SCALE, 'y': 0}]},
-
-            {'node1->node2': [{'x': 0, 'y': 0},
-                              {'x': 0, 'y': 1.5 * SCALE},
-                              {'x': SCALE, 'y': 1.5 * SCALE},
-                              {'x': SCALE, 'y': 0}]},
-        ]
-
-        if self.nodes_num == 2:
-            self.nodes_connections['node1->node2'].append([{'x': 0, 'y': 0},
-                                                           {'x': 0, 'y': 0.5*SCALE},
-                                                           {'x': SCALE, 'y': 0.5*SCALE},
-                                                           {'x': SCALE, 'y': 0}])
-
-            self.nodes_connections['node1->node2'].append([{'x': 0, 'y': 0},
-                                                           {'x': 0, 'y': -0.5*SCALE},
-                                                           {'x': SCALE, 'y': -0.5*SCALE},
-                                                           {'x': SCALE, 'y': 0}])
-
-            for available_connection in available_connections_two_nodes:
-                if self.get_num_branches() < self.branches_num:
-                    for key, value in available_connection.items():
-                        self.nodes_connections[key].append(value)
-                else:
-                    break
-
         backup = copy.deepcopy(self.nodes_connections)
 
         while True:
@@ -160,9 +115,6 @@ class ElectricCircuit:
 
                         if self.get_num_connections_between_nodes(node1_name, node2_name) > 2:
                             num_unavailable_node_pairs += 1
-
-                    print(num_unavailable_node_pairs)
-                    print(len(available_nodes) * (len(available_nodes) - 1) // 2)
 
                     if num_unavailable_node_pairs == len(available_nodes) * (len(available_nodes) - 1) // 2:
                         revert_flag = True
@@ -212,8 +164,6 @@ class ElectricCircuit:
         plt.ylim(-13, 13)
         plt.axis('equal')
 
-        bounds = self.find_bounds()
-
         for node, coords in self.nodes.items():
             plt.plot(coords['x'], coords['y'], 'ko')
 
@@ -223,9 +173,6 @@ class ElectricCircuit:
                     if i + 1 < len(connection):
                         plt.plot([connection[i]['x'], connection[i + 1]['x']],
                                  [connection[i]['y'], connection[i + 1]['y']], 'k-')
-
-        # plt.plot([bounds['left'], bounds['right'], bounds['right'], bounds['left'], bounds['left']],
-        #          [bounds['top'], bounds['top'], bounds['bottom'], bounds['bottom'], bounds['top']], 'r-')
 
         plt.show()
 
@@ -308,228 +255,274 @@ class ElectricCircuit:
                 bottom_node = node2
                 not_bottom_node = node1
 
+            # *-------|
+            # |       |
+            # |       |
+            # |---*---|
             if self.check_node_type(not_bottom_node) == 'upper_left':
-                print('case 1')
+                connections = [
+                    bottom_node,
+                    {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
+                    {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                    {'x': bounds['left'] - SCALE / 2, 'y': not_bottom_node['y']},
+                    not_bottom_node
+                ]
                 if (self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)) in self.nodes_connections:
                     self.nodes_connections[self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)].append(
-                        [
-                            bottom_node,
-                            {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': not_bottom_node['y']},
-                            not_bottom_node
-                        ]
+                        connections
                     )
                 else:
                     self.nodes_connections[self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)] = [
-                        [
-                            bottom_node,
-                            {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': not_bottom_node['y']},
-                            not_bottom_node
-                        ]
+                        connections
                     ]
+
+            # |-------*
+            # |       |
+            # |       |
+            # |---*---|
             if self.check_node_type(not_bottom_node) == 'upper_right':
-                print('case 2')
+                connections = [
+                    bottom_node,
+                    {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
+                    {'x': bounds['right'] + SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                    {'x': bounds['right'] + SCALE / 2, 'y': not_bottom_node['y']},
+                    not_bottom_node
+                ]
                 if (self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)) in self.nodes_connections:
                     self.nodes_connections[self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)].append(
-                        [
-                            bottom_node,
-                            {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['right'] + SCALE / 2, 'y': not_bottom_node['y']},
-                            not_bottom_node
-                        ]
+                        connections
                     )
                 else:
                     self.nodes_connections[self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)] = [
-                        [
-                            bottom_node,
-                            {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['right'] + SCALE / 2, 'y': not_bottom_node['y']},
-                            not_bottom_node
-                        ]
+                        connections
                     ]
         else:
             nodes_connections_key = self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)
             if node1['x'] == node2['x']:
+
+                # *-------|
+                # |       |
+                # |       |
+                # *-------|
                 if (node1_type == 'upper_left') or (node1_type == 'bottom_left'):
-                    print('case 3')
+                    connections = [
+                        node1,
+                        {'x': bounds['left'] - SCALE / 2, 'y': node1['y']},
+                        {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                        node2
+                    ]
                     if nodes_connections_key in self.nodes_connections:
                         self.nodes_connections[nodes_connections_key].append(
-                            [
-                                node1,
-                                {'x': bounds['left'] - SCALE / 2, 'y': node1['y']},
-                                {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
-                                node2
-                            ]
+                            connections
                         )
                     else:
                         self.nodes_connections[nodes_connections_key] = [
-                            [
-                                node1,
-                                {'x': bounds['left'] - SCALE / 2, 'y': node1['y']},
-                                {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
-                                node2
-                            ]
+                            connections
                         ]
+
+                # |-------*
+                # |       |
+                # |       |
+                # |-------*
                 elif (node1_type == 'upper_right') or (node1_type == 'bottom_right'):
-                    print('case 4')
+                    connections = [
+                        node1,
+                        {'x': bounds['right'] + SCALE / 2, 'y': node1['y']},
+                        {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
+                        node2
+                    ]
                     if nodes_connections_key in self.nodes_connections:
                         self.nodes_connections[nodes_connections_key].append(
-                            [
-                                node1,
-                                {'x': bounds['right'] + SCALE / 2, 'y': node1['y']},
-                                {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
-                                node2
-                            ]
+                            connections
                         )
                     else:
                         self.nodes_connections[nodes_connections_key] = [
-                            [
-                                node1,
-                                {'x': bounds['right'] + SCALE / 2, 'y': node1['y']},
-                                {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
-                                node2
-                            ]
+                            connections
                         ]
 
             elif node1['y'] == node2['y']:
-                if (node1_type == 'upper_left') or (node1_type == 'upper_right'):
-                    print('case 5')
+
+                # *-------*
+                if self.nodes_num == 2:
+                    connections = [
+                        [
+                            node1,
+                            {'x': node1['x'], 'y': node1['y'] + SCALE / 2},
+                            {'x': node2['x'], 'y': node2['y'] + SCALE / 2},
+                            node2
+                        ],
+                        [
+                            node1,
+                            {'x': node1['x'], 'y': node1['y'] - SCALE / 2},
+                            {'x': node2['x'], 'y': node2['y'] - SCALE / 2},
+                            node2
+                        ]
+                    ]
+                    if nodes_connections_key in self.nodes_connections:
+                        self.nodes_connections[nodes_connections_key].extend(
+                            connections
+                        )
+                    else:
+                        self.nodes_connections[nodes_connections_key] = connections
+
+                # *-------*
+                # |       |
+                # |       |
+                # |-------|
+                elif (node1_type == 'upper_left') or (node1_type == 'upper_right'):
+                    connections = [
+                        node1,
+                        {'x': node1['x'], 'y': bounds['top'] + SCALE/2},
+                        {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
+                        node2
+                    ]
                     if nodes_connections_key in self.nodes_connections:
                         self.nodes_connections[nodes_connections_key].append(
-                            [
-                                node1,
-                                {'x': node1['x'], 'y': bounds['top'] + SCALE/2},
-                                {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
-                                node2
-                            ]
+                            connections
                         )
                     else:
                         self.nodes_connections[nodes_connections_key] = [
-                            [
-                                node1,
-                                {'x': node1['x'], 'y': bounds['top'] + SCALE/2},
-                                {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
-                                node2
-                            ]
+                            connections
                         ]
+
+                # |-------|
+                # |       |
+                # |       |
+                # *-------*
                 elif (node1_type == 'bottom_right') or (node1_type == 'bottom_left'):
-                    print('case 6')
+                    connections = [
+                        node1,
+                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE/2},
+                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE/2},
+                        node2
+                    ]
                     if nodes_connections_key in self.nodes_connections:
                         self.nodes_connections[nodes_connections_key].append(
-                            [
-                                node1,
-                                {'x': node1['x'], 'y': bounds['bottom'] - SCALE/2},
-                                {'x': node2['x'], 'y': bounds['bottom'] - SCALE/2},
-                                node2
-                            ]
+                            connections
                         )
                     else:
                         self.nodes_connections[nodes_connections_key] = [
-                            [
-                                node1,
-                                {'x': node1['x'], 'y': bounds['bottom'] - SCALE/2},
-                                {'x': node2['x'], 'y': bounds['bottom'] - SCALE/2},
-                                node2
-                            ]
+                            connections
                         ]
 
+            #    |-------*(1)
+            #    |       |
+            #    |       |
+            # (2)*-------|
             elif (node1['x'] > node2['x']) and (node1['y'] > node2['y']):
-                print('case 7')
+                connections = [
+                    [
+                        node1,
+                        {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
+                        {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE / 2},
+                        {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                        node2
+                    ],
+                    [
+                        node1,
+                        {'x': bounds['right'] + SCALE / 2, 'y': node1['y']},
+                        {'x': bounds['right'] + SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE / 2},
+                        node2
+                    ]
+                ]
                 if nodes_connections_key in self.nodes_connections:
                     self.nodes_connections[nodes_connections_key].append(
-                        [
-                            node1,
-                            {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
-                            node2
-                        ]
+                        get_random_elements(connections, 1)[0]
                     )
                 else:
                     self.nodes_connections[nodes_connections_key] = [
-                        [
-                            node1,
-                            {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
-                            node2
-                        ]
+                        get_random_elements(connections, 1)[0]
                     ]
 
+            # (2)*-------|
+            #    |       |
+            #    |       |
+            #    |-------*(1)
             elif (node1['x'] > node2['x']) and (node1['y'] < node2['y']):
-                print('case 8')
+                connections = [
+                    [
+                        node1,
+                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE / 2},
+                        {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                        {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                        node2
+                    ],
+                    [
+                        node1,
+                        {'x': bounds['right'] + SCALE / 2, 'y': node1['y']},
+                        {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
+                        {'x': node2['x'], 'y': bounds['top'] + SCALE / 2},
+                        node2
+                    ]
+                ]
                 if nodes_connections_key in self.nodes_connections:
                     self.nodes_connections[nodes_connections_key].append(
-                        [
-                            node1,
-                            {'x': node1['x'], 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
-                            node2
-                        ]
+                        get_random_elements(connections, 1)[0]
                     )
                 else:
                     self.nodes_connections[nodes_connections_key] = [
-                        [
-                            node1,
-                            {'x': node1['x'], 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                            {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
-                            node2
-                        ]
+                        get_random_elements(connections, 1)[0]
                     ]
 
+            #    |-------*(2)
+            #    |       |
+            #    |       |
+            # (1)*-------|
             elif (node1['x'] < node2['x']) and (node1['y'] < node2['y']):
-                print('case 9')
+                connections = [
+                    [
+                        node1,
+                        {'x': bounds['left'] - SCALE / 2, 'y': node1['y']},
+                        {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE / 2},
+                        {'x': node2['x'], 'y': bounds['top'] + SCALE / 2},
+                        node2
+                    ],
+                    [
+                        node1,
+                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE / 2},
+                        {'x': bounds['right'] + SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                        {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
+                        node2
+                    ]
+                ]
                 if nodes_connections_key in self.nodes_connections:
                     self.nodes_connections[nodes_connections_key].append(
-                        [
-                            node1,
-                            {'x': bounds['left'] - SCALE/2, 'y': node1['y']},
-                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE/2},
-                            {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
-                            node2
-                         ]
+                        get_random_elements(connections, 1)[0]
                     )
                 else:
                     self.nodes_connections[nodes_connections_key] = [
-                        [
-                            node1,
-                            {'x': bounds['left'] - SCALE/2, 'y': node1['y']},
-                            {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE/2},
-                            {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
-                            node2
-                         ]
+                        get_random_elements(connections, 1)[0]
                     ]
 
+            # (1)*-------|
+            #    |       |
+            #    |       |
+            #    |-------*(2)
             elif (node1['x'] < node2['x']) and (node1['y'] > node2['y']):
-                print('case 10')
+                connections = [
+                    [
+                        node1,
+                        {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
+                        {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
+                        {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
+                        node2
+                    ],
+                    [
+                        node1,
+                        {'x': bounds['left'] - SCALE / 2, 'y': node1['y']},
+                        {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
+                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE / 2},
+                        node2
+                    ]
+                ]
                 if nodes_connections_key in self.nodes_connections:
                     self.nodes_connections[nodes_connections_key].append(
-                        [
-                            node1,
-                            {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
-                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
-                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
-                            {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
-                            node2
-                        ]
+                        get_random_elements(connections, 1)[0]
                     )
                 else:
                     self.nodes_connections[nodes_connections_key] = [
-                        [
-                            node1,
-                            {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
-                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
-                            {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
-                            {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
-                            node2
-                        ]
+                        get_random_elements(connections, 1)[0]
                     ]
 
     def find_blocked_nodes(self):
@@ -573,36 +566,36 @@ class ElectricCircuit:
 
             if node_type == 'upper_left':
                 node_lines = [
-                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': 100 * SCALE}],  # вверх
-                    [{'x': coords['x'], 'y': coords['y']}, {'x': -100 * SCALE, 'y': coords['y']}]  # влево
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': 100 * SCALE}],
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': -100 * SCALE, 'y': coords['y']}]
                 ]
 
             elif node_type == 'bottom_left':
                 node_lines = [
-                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': -100 * SCALE}], #вниз
-                    [{'x': coords['x'], 'y': coords['y']}, {'x': -100 * SCALE, 'y': coords['y']}]  # влево
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': -100 * SCALE}],
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': -100 * SCALE, 'y': coords['y']}]
                 ]
 
             elif node_type == 'upper_right':
                 node_lines = [
-                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': 100 * SCALE}],  # вверх
-                    [{'x': coords['x'], 'y': coords['y']}, {'x': 100 * SCALE, 'y': coords['y']}],  # вправо
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': 100 * SCALE}],
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': 100 * SCALE, 'y': coords['y']}],
                 ]
 
             elif node_type == 'bottom_right':
                 node_lines = [
-                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': -100 * SCALE}], #вниз
-                    [{'x': coords['x'], 'y': coords['y']}, {'x': 100 * SCALE, 'y': coords['y']}],  # вправо
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': -100 * SCALE}],
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': 100 * SCALE, 'y': coords['y']}],
                 ]
 
             elif node_type == 'upper_middle':
                 node_lines = [
-                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': 100 * SCALE}] # вверх
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': 100 * SCALE}]
                 ]
 
             elif node_type == 'bottom_middle':
                 node_lines = [
-                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': -100 * SCALE}], #вниз
+                    [{'x': coords['x'], 'y': coords['y']}, {'x': coords['x'], 'y': -100 * SCALE}],
                 ]
 
             for node_line in node_lines:
@@ -615,11 +608,6 @@ class ElectricCircuit:
                                 locked_nodes.append({node: coords})
 
         return locked_nodes
-
-    def get_coords_by_name(self, node_name):
-        for key, value in self.nodes.items():
-            if key == node_name:
-                return value
 
     def get_name_by_coords(self, node_coords):
         for key, value in self.nodes.items():
