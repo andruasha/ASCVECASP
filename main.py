@@ -1,5 +1,6 @@
-from conf.config import SCALE
+import matplotlib.pyplot as plt
 from src.electric_circuit import ElectricCircuit
+from conf.config import SCALE
 
 
 template_two_nodes_1 = {'node1': {'x': 0, 'y': 0},
@@ -19,8 +20,7 @@ template_four_nodes_2 = {'node1': {'x': 0, 'y': SCALE},
                          'node3': {'x': 2 * SCALE, 'y': SCALE},
                          'node4': {'x': SCALE, 'y': 0}}
 
-circuit = ElectricCircuit(10, template_four_nodes_1)
-
+branches = 10
+circuit = ElectricCircuit(branches, template_four_nodes_1)
 circuit.create_nodes_connections()
-
 circuit.visualise_circuit()

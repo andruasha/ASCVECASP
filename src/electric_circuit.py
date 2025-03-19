@@ -1,7 +1,6 @@
 from conf.config import SCALE
 
 import matplotlib.pyplot as plt
-import random
 import secrets
 import copy
 from itertools import combinations
@@ -99,7 +98,7 @@ class ElectricCircuit:
                     self.nodes_connections = copy.deepcopy(backup)
                     revert_flag = False
 
-                locked_nodes = self.find_blocked_nodes()
+                locked_nodes = self.find_locked_nodes()
                 available_nodes = []
                 for node_name, node_coords in self.nodes.items():
                     if {node_name: node_coords} not in locked_nodes:
@@ -525,7 +524,7 @@ class ElectricCircuit:
                         get_random_elements(connections, 1)[0]
                     ]
 
-    def find_blocked_nodes(self):
+    def find_locked_nodes(self):
         def find_intersection(line1, line2):
             A, B = line1
             C, D = line2
