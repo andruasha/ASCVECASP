@@ -371,8 +371,8 @@ class ElectricCircuit:
                 elif (node1_type == 'upper_left') or (node1_type == 'upper_right'):
                     connections = [
                         node1,
-                        {'x': node1['x'], 'y': bounds['top'] + SCALE/2},
-                        {'x': node2['x'], 'y': bounds['top'] + SCALE/2},
+                        {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
+                        {'x': node2['x'], 'y': bounds['top'] + SCALE / 2},
                         node2
                     ]
                     if nodes_connections_key in self.nodes_connections:
@@ -391,8 +391,8 @@ class ElectricCircuit:
                 elif (node1_type == 'bottom_right') or (node1_type == 'bottom_left'):
                     connections = [
                         node1,
-                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE/2},
-                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE/2},
+                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE / 2},
+                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE / 2},
                         node2
                     ]
                     if nodes_connections_key in self.nodes_connections:

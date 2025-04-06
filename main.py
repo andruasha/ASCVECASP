@@ -26,7 +26,7 @@ branches = 10
 circuit_topology = ElectricCircuit(branches, template_four_nodes_1)
 circuit_topology.create_nodes_connections()
 
-circuit = ElementsPlacer(circuit_topology, 2, 2, 2, 2, 2)
+circuit = ElementsPlacer(circuit_topology, 2, 2, 10, 5, 5)
 print(circuit.layout)
 
 CircuitVisualize(circuit, circuit_topology).visualize()
