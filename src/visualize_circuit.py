@@ -274,8 +274,8 @@ class CircuitVisualize:
             plt.plot(coords['x'], coords['y'], 'ko', markersize=3)
 
         resistor_idx = 1
-        capacity_idx = 1
-        inductance_idx = 1
+        capacitor_idx = 1
+        inductor_idx = 1
         voltage_source_idx = 1
         current_source_idx = 1
 
@@ -300,12 +300,12 @@ class CircuitVisualize:
                             if element['type'] == 'resistor':
                                 draw_resistor({'x': end['x'], 'y': current_position}, 'R' + str(resistor_idx), 'vertical')
                                 resistor_idx += 1
-                            elif element['type'] == 'capacity':
-                                draw_capacitor({'x': end['x'], 'y': current_position}, 'C' + str(capacity_idx), 'vertical')
-                                capacity_idx += 1
-                            elif element['type'] == 'inductance':
-                                draw_inductor({'x': end['x'], 'y': current_position}, 'L' + str(inductance_idx), 'vertical')
-                                inductance_idx += 1
+                            elif element['type'] == 'capacitor':
+                                draw_capacitor({'x': end['x'], 'y': current_position}, 'C' + str(capacitor_idx), 'vertical')
+                                capacitor_idx += 1
+                            elif element['type'] == 'inductor':
+                                draw_inductor({'x': end['x'], 'y': current_position}, 'L' + str(inductor_idx), 'vertical')
+                                inductor_idx += 1
                             elif element['type'] == 'voltage_source':
                                 draw_voltage_source({'x': end['x'], 'y': current_position}, 'V' + str(voltage_source_idx), 'vertical')
                                 voltage_source_idx += 1
@@ -320,12 +320,12 @@ class CircuitVisualize:
                             if element['type'] == 'resistor':
                                 draw_resistor({'x': current_position, 'y': end['y']}, 'R' + str(resistor_idx), 'horizontal')
                                 resistor_idx += 1
-                            elif element['type'] == 'capacity':
-                                draw_capacitor({'x': current_position, 'y': end['y']}, 'C' + str(capacity_idx), 'horizontal')
-                                capacity_idx += 1
-                            elif element['type'] == 'inductance':
-                                draw_inductor({'x': current_position, 'y': end['y']}, 'L' + str(inductance_idx), 'horizontal')
-                                inductance_idx += 1
+                            elif element['type'] == 'capacitor':
+                                draw_capacitor({'x': current_position, 'y': end['y']}, 'C' + str(capacitor_idx), 'horizontal')
+                                capacitor_idx += 1
+                            elif element['type'] == 'inductor':
+                                draw_inductor({'x': current_position, 'y': end['y']}, 'L' + str(inductor_idx), 'horizontal')
+                                inductor_idx += 1
                             elif element['type'] == 'voltage_source':
                                 draw_voltage_source({'x': current_position, 'y': end['y']}, 'V' + str(voltage_source_idx), 'horizontal')
                                 voltage_source_idx += 1
@@ -356,12 +356,12 @@ class CircuitVisualize:
                                 if element['type'] == 'resistor':
                                     draw_resistor(pos, 'R' + str(resistor_idx), 'vertical')
                                     resistor_idx += 1
-                                elif element['type'] == 'capacity':
-                                    draw_capacitor(pos, 'C' + str(capacity_idx), 'vertical')
-                                    capacity_idx += 1
-                                elif element['type'] == 'inductance':
-                                    draw_inductor(pos, 'L' + str(inductance_idx), 'vertical')
-                                    inductance_idx += 1
+                                elif element['type'] == 'capacitor':
+                                    draw_capacitor(pos, 'C' + str(capacitor_idx), 'vertical')
+                                    capacitor_idx += 1
+                                elif element['type'] == 'inductor':
+                                    draw_inductor(pos, 'L' + str(inductor_idx), 'vertical')
+                                    inductor_idx += 1
                                 elif element['type'] == 'voltage_source':
                                     draw_voltage_source(pos, 'V' + str(voltage_source_idx), 'vertical')
                                     voltage_source_idx += 1
@@ -379,12 +379,12 @@ class CircuitVisualize:
                                 if element['type'] == 'resistor':
                                     draw_resistor(pos, 'R' + str(resistor_idx), 'horizontal')
                                     resistor_idx += 1
-                                elif element['type'] == 'capacity':
-                                    draw_capacitor(pos, 'C' + str(capacity_idx), 'horizontal')
-                                    capacity_idx += 1
-                                elif element['type'] == 'inductance':
-                                    draw_inductor(pos, 'L' + str(inductance_idx), 'horizontal')
-                                    inductance_idx += 1
+                                elif element['type'] == 'capacitor':
+                                    draw_capacitor(pos, 'C' + str(capacitor_idx), 'horizontal')
+                                    capacitor_idx += 1
+                                elif element['type'] == 'inductor':
+                                    draw_inductor(pos, 'L' + str(inductor_idx), 'horizontal')
+                                    inductor_idx += 1
                                 elif element['type'] == 'voltage_source':
                                     draw_voltage_source(pos, 'V' + str(voltage_source_idx), 'horizontal')
                                     voltage_source_idx += 1
@@ -393,7 +393,8 @@ class CircuitVisualize:
                                     current_source_idx += 1
                                 current_position += 2 * step
 
-        plt.show()
+        plt.axis('off')
+        return plt
 
     def get_free_lines(self, target_segment):
         def is_point_on_segment(p, a, b, tol=1e-9):

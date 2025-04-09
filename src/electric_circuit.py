@@ -1,4 +1,5 @@
 from conf.config import SCALE
+from conf.config import SCALE_RATIO
 
 import matplotlib.pyplot as plt
 import secrets
@@ -133,6 +134,7 @@ class ElectricCircuit:
                 break
             else:
                 continue
+        return self
 
     def get_num_connections_between_nodes(self, node1_name, node2_name):
         num_connections = 0
@@ -261,9 +263,9 @@ class ElectricCircuit:
             if self.check_node_type(not_bottom_node) == 'upper_left':
                 connections = [
                     bottom_node,
-                    {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
-                    {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                    {'x': bounds['left'] - SCALE / 2, 'y': not_bottom_node['y']},
+                    {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE_RATIO},
+                    {'x': bounds['left'] - SCALE_RATIO, 'y': bounds['bottom'] - SCALE_RATIO},
+                    {'x': bounds['left'] - SCALE_RATIO, 'y': not_bottom_node['y']},
                     not_bottom_node
                 ]
                 if (self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)) in self.nodes_connections:
@@ -282,9 +284,9 @@ class ElectricCircuit:
             if self.check_node_type(not_bottom_node) == 'upper_right':
                 connections = [
                     bottom_node,
-                    {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE / 2},
-                    {'x': bounds['right'] + SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                    {'x': bounds['right'] + SCALE / 2, 'y': not_bottom_node['y']},
+                    {'x': bottom_node['x'], 'y': bounds['bottom'] - SCALE_RATIO},
+                    {'x': bounds['right'] + SCALE_RATIO, 'y': bounds['bottom'] - SCALE_RATIO},
+                    {'x': bounds['right'] + SCALE_RATIO, 'y': not_bottom_node['y']},
                     not_bottom_node
                 ]
                 if (self.get_name_by_coords(node1) + '->' + self.get_name_by_coords(node2)) in self.nodes_connections:
@@ -306,8 +308,8 @@ class ElectricCircuit:
                 if (node1_type == 'upper_left') or (node1_type == 'bottom_left'):
                     connections = [
                         node1,
-                        {'x': bounds['left'] - SCALE / 2, 'y': node1['y']},
-                        {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                        {'x': bounds['left'] - SCALE_RATIO, 'y': node1['y']},
+                        {'x': bounds['left'] - SCALE_RATIO, 'y': node2['y']},
                         node2
                     ]
                     if nodes_connections_key in self.nodes_connections:
@@ -326,8 +328,8 @@ class ElectricCircuit:
                 elif (node1_type == 'upper_right') or (node1_type == 'bottom_right'):
                     connections = [
                         node1,
-                        {'x': bounds['right'] + SCALE / 2, 'y': node1['y']},
-                        {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
+                        {'x': bounds['right'] + SCALE_RATIO, 'y': node1['y']},
+                        {'x': bounds['right'] + SCALE_RATIO, 'y': node2['y']},
                         node2
                     ]
                     if nodes_connections_key in self.nodes_connections:
@@ -346,14 +348,14 @@ class ElectricCircuit:
                     connections = [
                         [
                             node1,
-                            {'x': node1['x'], 'y': node1['y'] + SCALE / 2},
-                            {'x': node2['x'], 'y': node2['y'] + SCALE / 2},
+                            {'x': node1['x'], 'y': node1['y'] + SCALE_RATIO},
+                            {'x': node2['x'], 'y': node2['y'] + SCALE_RATIO},
                             node2
                         ],
                         [
                             node1,
-                            {'x': node1['x'], 'y': node1['y'] - SCALE / 2},
-                            {'x': node2['x'], 'y': node2['y'] - SCALE / 2},
+                            {'x': node1['x'], 'y': node1['y'] - SCALE_RATIO},
+                            {'x': node2['x'], 'y': node2['y'] - SCALE_RATIO},
                             node2
                         ]
                     ]
@@ -371,8 +373,8 @@ class ElectricCircuit:
                 elif (node1_type == 'upper_left') or (node1_type == 'upper_right'):
                     connections = [
                         node1,
-                        {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
-                        {'x': node2['x'], 'y': bounds['top'] + SCALE / 2},
+                        {'x': node1['x'], 'y': bounds['top'] + SCALE_RATIO},
+                        {'x': node2['x'], 'y': bounds['top'] + SCALE_RATIO},
                         node2
                     ]
                     if nodes_connections_key in self.nodes_connections:
@@ -391,8 +393,8 @@ class ElectricCircuit:
                 elif (node1_type == 'bottom_right') or (node1_type == 'bottom_left'):
                     connections = [
                         node1,
-                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE / 2},
-                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE / 2},
+                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE_RATIO},
+                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE_RATIO},
                         node2
                     ]
                     if nodes_connections_key in self.nodes_connections:
@@ -412,16 +414,16 @@ class ElectricCircuit:
                 connections = [
                     [
                         node1,
-                        {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
-                        {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE / 2},
-                        {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                        {'x': node1['x'], 'y': bounds['top'] + SCALE_RATIO},
+                        {'x': bounds['left'] - SCALE_RATIO, 'y': bounds['top'] + SCALE_RATIO},
+                        {'x': bounds['left'] - SCALE_RATIO, 'y': node2['y']},
                         node2
                     ],
                     [
                         node1,
-                        {'x': bounds['right'] + SCALE / 2, 'y': node1['y']},
-                        {'x': bounds['right'] + SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE / 2},
+                        {'x': bounds['right'] + SCALE_RATIO, 'y': node1['y']},
+                        {'x': bounds['right'] + SCALE_RATIO, 'y': bounds['bottom'] - SCALE_RATIO},
+                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE_RATIO},
                         node2
                     ]
                 ]
@@ -442,16 +444,16 @@ class ElectricCircuit:
                 connections = [
                     [
                         node1,
-                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE / 2},
-                        {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                        {'x': bounds['left'] - SCALE / 2, 'y': node2['y']},
+                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE_RATIO},
+                        {'x': bounds['left'] - SCALE_RATIO, 'y': bounds['bottom'] - SCALE_RATIO},
+                        {'x': bounds['left'] - SCALE_RATIO, 'y': node2['y']},
                         node2
                     ],
                     [
                         node1,
-                        {'x': bounds['right'] + SCALE / 2, 'y': node1['y']},
-                        {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
-                        {'x': node2['x'], 'y': bounds['top'] + SCALE / 2},
+                        {'x': bounds['right'] + SCALE_RATIO, 'y': node1['y']},
+                        {'x': bounds['right'] + SCALE_RATIO, 'y': bounds['top'] + SCALE_RATIO},
+                        {'x': node2['x'], 'y': bounds['top'] + SCALE_RATIO},
                         node2
                     ]
                 ]
@@ -472,16 +474,16 @@ class ElectricCircuit:
                 connections = [
                     [
                         node1,
-                        {'x': bounds['left'] - SCALE / 2, 'y': node1['y']},
-                        {'x': bounds['left'] - SCALE / 2, 'y': bounds['top'] + SCALE / 2},
-                        {'x': node2['x'], 'y': bounds['top'] + SCALE / 2},
+                        {'x': bounds['left'] - SCALE_RATIO, 'y': node1['y']},
+                        {'x': bounds['left'] - SCALE_RATIO, 'y': bounds['top'] + SCALE_RATIO},
+                        {'x': node2['x'], 'y': bounds['top'] + SCALE_RATIO},
                         node2
                     ],
                     [
                         node1,
-                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE / 2},
-                        {'x': bounds['right'] + SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                        {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
+                        {'x': node1['x'], 'y': bounds['bottom'] - SCALE_RATIO},
+                        {'x': bounds['right'] + SCALE_RATIO, 'y': bounds['bottom'] - SCALE_RATIO},
+                        {'x': bounds['right'] + SCALE_RATIO, 'y': node2['y']},
                         node2
                     ]
                 ]
@@ -502,16 +504,16 @@ class ElectricCircuit:
                 connections = [
                     [
                         node1,
-                        {'x': node1['x'], 'y': bounds['top'] + SCALE / 2},
-                        {'x': bounds['right'] + SCALE / 2, 'y': bounds['top'] + SCALE / 2},
-                        {'x': bounds['right'] + SCALE / 2, 'y': node2['y']},
+                        {'x': node1['x'], 'y': bounds['top'] + SCALE_RATIO},
+                        {'x': bounds['right'] + SCALE_RATIO, 'y': bounds['top'] + SCALE_RATIO},
+                        {'x': bounds['right'] + SCALE_RATIO, 'y': node2['y']},
                         node2
                     ],
                     [
                         node1,
-                        {'x': bounds['left'] - SCALE / 2, 'y': node1['y']},
-                        {'x': bounds['left'] - SCALE / 2, 'y': bounds['bottom'] - SCALE / 2},
-                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE / 2},
+                        {'x': bounds['left'] - SCALE_RATIO, 'y': node1['y']},
+                        {'x': bounds['left'] - SCALE_RATIO, 'y': bounds['bottom'] - SCALE_RATIO},
+                        {'x': node2['x'], 'y': bounds['bottom'] - SCALE_RATIO},
                         node2
                     ]
                 ]

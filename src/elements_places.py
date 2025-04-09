@@ -4,14 +4,14 @@ import copy
 
 class ElementsPlacer:
 
-    def __init__(self, circuit_topology, voltage_sources_num, current_sources_num, resistors_num, inductances_num,
-                 capacities_num):
+    def __init__(self, circuit_topology, voltage_sources_num, current_sources_num, resistors_num, inductors_num,
+                 capacitors_num):
         self.layout = {}
         self.voltage_sources_num = voltage_sources_num
         self.current_sources_num = current_sources_num
         self.resistors_num = resistors_num
-        self.inductances_num = inductances_num
-        self.capacities_num = capacities_num
+        self.inductors_num = inductors_num
+        self.capacitors_num = capacitors_num
 
         for connection_name, connection_coords in circuit_topology.nodes_connections.items():
             self.layout[connection_name] = []
@@ -19,11 +19,13 @@ class ElementsPlacer:
                 entry = {'connection_coords': sub_connection, 'elements': []}
                 self.layout[connection_name].append([entry])
 
-        self.main()
-
-    def main(self):
+    def place_elements(self):
         def is_layout_valid(layout):
             for connection_name, connections in layout.items():
+                for connection in connections:
+                    if len(connection[0]['elements']) > 8:
+                        return False
+
                 voltage_source_exists = False
                 connection_with_voltage_source = None
                 resistor_exists = False
@@ -47,6 +49,8 @@ class ElementsPlacer:
             return True
 
         backup = copy.deepcopy(self.layout)
+        regeneration_count = 0
+        max_regenerations = 50000
 
         while True:
             self.layout = copy.deepcopy(backup)
@@ -55,14 +59,19 @@ class ElementsPlacer:
             if is_layout_valid(self.layout):
                 break
             else:
-                continue
+                regeneration_count += 1
+
+                if regeneration_count >= max_regenerations:
+                    raise Exception("Невозможно сгенерировать набор валидных схем при данных параметрах")
+
+        return self
 
     def distribute_elements(self):
         vs_num = copy.deepcopy(self.voltage_sources_num)
         cs_num = copy.deepcopy(self.current_sources_num)
         r_num = copy.deepcopy(self.resistors_num)
-        i_num = copy.deepcopy(self.inductances_num)
-        c_num = copy.deepcopy(self.capacities_num)
+        i_num = copy.deepcopy(self.inductors_num)
+        c_num = copy.deepcopy(self.capacitors_num)
 
         all_connections = []
 
@@ -104,8 +113,8 @@ class ElementsPlacer:
 
         remaining_elements = (
             ['resistor'] * r_num +
-            ['inductance'] * i_num +
-            ['capacity'] * c_num
+            ['inductor'] * i_num +
+            ['capacitor'] * c_num
         )
         random.shuffle(remaining_elements)
 
