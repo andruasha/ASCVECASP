@@ -26,3 +26,7 @@
         [{'connection_coords': [{'x': 0, 'y': 5}, {'x': 0, 'y': 12.5}, {'x': 10.0, 'y': 12.5}, {'x': 10.0, 'y': 0}, {'x': 5, 'y': 0}], 'elements': []}]
     ]
 }
+
+==========
+[[{'type': 'resistor'}, {'type': 'active_dipole'}], [{'type': 'resistor'}], [{'type': 'resistor'}, {'type': 'resistor'}, {'type': 'resistor'}]]
+[[{'type': 'resistor'}, {'type': 'resistor'}, {'type': 'resistor'}], [{'type': 'resistor'}, {'type': 'active_dipole'}], [{'type': 'resistor'}]]
