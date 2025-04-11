@@ -7,9 +7,9 @@ from docx import Document
 from docx.shared import Inches
 from PIL import Image
 
-from src.active_dipole.electric_circuit import ElectricCircuit
-from src.active_dipole.elements_places import ElementsPlacer
-from src.active_dipole.visualize_circuit import CircuitVisualize
+from src.coupling_coefficient.electric_circuit import ElectricCircuit
+from src.coupling_coefficient.elements_places import ElementsPlacer
+from src.coupling_coefficient.visualize_circuit import CircuitVisualize
 
 from conf.config import SCALE
 
@@ -206,19 +206,35 @@ def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num)
             row_cells[1].text = 'Изображение не найдено'
 
         # Генерация номиналов
+        voltages = [round(random.uniform(15, 310), 0) for _ in range(voltage_sources_num)]
+        currents = [round(random.uniform(0.15, 3), 2) for _ in range(current_sources_num)]
+        resistors = [round(random.uniform(5, 100), 0) for _ in range(resistors_num)]
+
         descriptions = []
+        for idx, v in enumerate(voltages, 1):
+            descriptions.append(f"V{idx}={v} В")
+        for idx, r in enumerate(resistors, 1):
+            descriptions.append(f"R{idx}={r} Ом")
+        for idx, i_val in enumerate(currents, 1):
+            descriptions.append(f"I{idx}={i_val} А")
 
-        for v in range(1, voltage_sources_num + 1):
-            voltage = round(random.uniform(15, 310), 0)
-            descriptions.append(f"V{v}={voltage} В")
+        # Добавляем задание
+        if (voltages or currents) and resistors:
+            is_voltage = random.choice([True, False])
+            if is_voltage and voltages:
+                v_index = random.randint(1, len(voltages))
+                source_label = f"V{v_index}"
+            elif not is_voltage and currents:
+                c_index = random.randint(1, len(currents))
+                source_label = f"I{c_index}"
+            else:
+                # fallback если один из списков пуст
+                source_label = f"V1" if voltages else f"I1"
 
-        for r in range(1, resistors_num + 1):
-            resistance = round(random.uniform(5, 100), 0)
-            descriptions.append(f"R{r}={resistance} Ом")
-
-        for c in range(1, current_sources_num + 1):
-            current = round(random.uniform(0.15, 3), 2)
-            descriptions.append(f"I{c}={current} А")
+            r_index = random.randint(1, len(resistors))
+            task = f"Рассчитать коэффициент связи между {source_label} и R{r_index}"
+            descriptions.append('')
+            descriptions.append(task)
 
         row_cells[2].text = '\n'.join(descriptions)
 
@@ -226,7 +242,7 @@ def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num)
     print(f'Файл сохранён: {OUTPUT_DOCX}')
 
 
-def generate_active_dipole_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num):
+def generate_coupling_coefficient_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num):
     generate_schemes_set(
         nodes_num=nodes_num,
         branches_num=branches_num,

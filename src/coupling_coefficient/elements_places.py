@@ -42,8 +42,6 @@ class ElementsPlacer:
                             for element_type in connection[0]['elements']:
                                 if element_type['type'] == 'resistor':
                                     resistor_exists = True
-                                if element_type['type'] == 'active_dipole':
-                                    return False
 
                     if not resistor_exists:
                         return False
@@ -112,8 +110,7 @@ class ElementsPlacer:
                 vs_num -= 1
 
         remaining_elements = (
-            ['resistor'] * r_num +
-            ['active_dipole'] * 1
+            ['resistor'] * r_num
         )
         random.shuffle(remaining_elements)
 
