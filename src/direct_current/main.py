@@ -7,9 +7,9 @@ from docx import Document
 from docx.shared import Inches
 from PIL import Image
 
-from src.active_dipole.electric_circuit import ElectricCircuit
-from src.active_dipole.elements_places import ElementsPlacer
-from src.active_dipole.visualize_circuit import CircuitVisualize
+from src.direct_current.electric_circuit import ElectricCircuit
+from src.direct_current.elements_places import ElementsPlacer
+from src.direct_current.visualize_circuit import CircuitVisualize
 
 from conf.config import SCALE
 
@@ -225,7 +225,7 @@ def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num)
     print(f'Файл сохранён: {OUTPUT_DOCX}')
 
 
-def generate_active_dipole_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num):
+def generate_direct_current_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num):
     generate_schemes_set(
         nodes_num=nodes_num,
         branches_num=branches_num,

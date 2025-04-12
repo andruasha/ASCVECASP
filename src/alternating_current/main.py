@@ -7,9 +7,9 @@ from docx import Document
 from docx.shared import Inches
 from PIL import Image
 
-from src.active_dipole.electric_circuit import ElectricCircuit
-from src.active_dipole.elements_places import ElementsPlacer
-from src.active_dipole.visualize_circuit import CircuitVisualize
+from src.alternating_current.electric_circuit import ElectricCircuit
+from src.alternating_current.elements_places import ElementsPlacer
+from src.alternating_current.visualize_circuit import CircuitVisualize
 
 from conf.config import SCALE
 
@@ -68,7 +68,7 @@ def compare_layouts(circuit_layout_1, circuit_layout_2):
     return absolutely_unique
 
 
-def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num):
+def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num):
     template_two_nodes_1 = {'node1': {'x': 0, 'y': 0},
                             'node2': {'x': SCALE, 'y': 0}}
 
@@ -135,7 +135,9 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         placed_circuit = ElementsPlacer(circuit_topology,
                                         voltage_sources_num,
                                         current_sources_num,
-                                        resistors_num).place_elements()
+                                        resistors_num,
+                                        inductors_num,
+                                        capacitors_num).place_elements()
         circuits.append(placed_circuit)
         circuits_topologies_paired.append((circuit_topology, placed_circuit))
 
@@ -171,7 +173,7 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         index += 1
 
 
-def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num):
+def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num):
     doc = Document()
 
     table = doc.add_table(rows=1, cols=3)
@@ -215,9 +217,20 @@ def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num)
             resistance = round(random.uniform(5, 100), 0)
             descriptions.append(f"R{r}={resistance} Ом")
 
+        for r in range(1, capacitors_num + 1):
+            capacity = round(random.uniform(0.05, 1), 2)
+            descriptions.append(f"C{r}={capacity} мкФ")
+
+        for r in range(1, inductors_num + 1):
+            inductance = round(random.uniform(1, 20), 0)
+            descriptions.append(f"L{r}={inductance} мГн")
+
         for c in range(1, current_sources_num + 1):
             current = round(random.uniform(0.15, 3), 2)
             descriptions.append(f"I{c}={current} А")
+
+        frequency = round(random.uniform(1, 20), 0)
+        descriptions.append(f"f={frequency} кГц")
 
         row_cells[2].text = '\n'.join(descriptions)
 
@@ -225,17 +238,21 @@ def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num)
     print(f'Файл сохранён: {OUTPUT_DOCX}')
 
 
-def generate_active_dipole_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num):
+def generate_alternating_current_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num):
     generate_schemes_set(
         nodes_num=nodes_num,
         branches_num=branches_num,
         voltage_sources_num=voltage_sources_num,
         current_sources_num=current_sources_num,
-        resistors_num=resistors_num
+        resistors_num=resistors_num,
+        capacitors_num=capacitors_num,
+        inductors_num=inductors_num
     )
 
     add_schemes_to_word(
         voltage_sources_num=voltage_sources_num,
         current_sources_num=current_sources_num,
-        resistors_num=resistors_num
+        resistors_num=resistors_num,
+        capacitors_num=capacitors_num,
+        inductors_num=inductors_num
     )
