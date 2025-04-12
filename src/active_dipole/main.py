@@ -208,15 +208,15 @@ def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num)
         descriptions = []
 
         for v in range(1, voltage_sources_num + 1):
-            voltage = round(random.uniform(15, 310), 0)
+            voltage = random.randint(15, 310)
             descriptions.append(f"V{v}={voltage} В")
 
         for r in range(1, resistors_num + 1):
-            resistance = round(random.uniform(5, 100), 0)
+            resistance = random.randint(5, 100)
             descriptions.append(f"R{r}={resistance} Ом")
 
         for c in range(1, current_sources_num + 1):
-            current = round(random.uniform(0.15, 3), 2)
+            current = random.uniform(0.15, 3)
             descriptions.append(f"I{c}={current} А")
 
         row_cells[2].text = '\n'.join(descriptions)

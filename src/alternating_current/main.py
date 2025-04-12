@@ -210,11 +210,11 @@ def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num,
         descriptions = []
 
         for v in range(1, voltage_sources_num + 1):
-            voltage = round(random.uniform(15, 310), 0)
+            voltage = random.randint(15, 310)
             descriptions.append(f"V{v}={voltage} В")
 
         for r in range(1, resistors_num + 1):
-            resistance = round(random.uniform(5, 100), 0)
+            resistance = random.randint(5, 100)
             descriptions.append(f"R{r}={resistance} Ом")
 
         for r in range(1, capacitors_num + 1):
@@ -222,14 +222,14 @@ def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num,
             descriptions.append(f"C{r}={capacity} мкФ")
 
         for r in range(1, inductors_num + 1):
-            inductance = round(random.uniform(1, 20), 0)
+            inductance = random.randint(1, 20)
             descriptions.append(f"L{r}={inductance} мГн")
 
         for c in range(1, current_sources_num + 1):
             current = round(random.uniform(0.15, 3), 2)
             descriptions.append(f"I{c}={current} А")
 
-        frequency = round(random.uniform(1, 20), 0)
+        frequency = random.randint(1, 20)
         descriptions.append(f"f={frequency} кГц")
 
         row_cells[2].text = '\n'.join(descriptions)

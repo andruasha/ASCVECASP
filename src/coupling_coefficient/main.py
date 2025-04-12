@@ -206,9 +206,9 @@ def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num)
             row_cells[1].text = 'Изображение не найдено'
 
         # Генерация номиналов
-        voltages = [round(random.uniform(15, 310), 0) for _ in range(voltage_sources_num)]
-        currents = [round(random.uniform(0.15, 3), 2) for _ in range(current_sources_num)]
-        resistors = [round(random.uniform(5, 100), 0) for _ in range(resistors_num)]
+        voltages = [random.randint(15, 310) for _ in range(voltage_sources_num)]
+        currents = [random.randint(0.15, 3) for _ in range(current_sources_num)]
+        resistors = [random.randint(5, 100) for _ in range(resistors_num)]
 
         descriptions = []
         for idx, v in enumerate(voltages, 1):
