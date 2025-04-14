@@ -7,7 +7,7 @@ from docx import Document
 from docx.shared import Inches
 from PIL import Image
 
-from src.alternating_current.electric_circuit import ElectricCircuit
+from src.common.electric_circuit import ElectricCircuit
 from src.alternating_current.elements_places import ElementsPlacer
 from src.alternating_current.visualize_circuit import CircuitVisualize
 

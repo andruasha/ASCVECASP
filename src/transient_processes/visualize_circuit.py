@@ -2,7 +2,7 @@ from conf.config import SCALE
 
 import matplotlib.pyplot as plt
 
-from src.common.draw_functions import draw_resistor, draw_capacitor, draw_inductor, draw_current_source, draw_voltage_source
+from src.common.draw_functions import draw_resistor, draw_capacitor, draw_inductor, draw_current_source, draw_voltage_source, draw_switch
 
 
 class CircuitVisualize:
@@ -107,8 +107,7 @@ class CircuitVisualize:
                         current_position = min(end['y'], start['y']) + step
                         for element in segment_elements:
                             if element['type'] == 'resistor':
-                                draw_resistor({'x': end['x'], 'y': current_position}, 'R' + str(resistor_idx),
-                                              'vertical')
+                                draw_resistor({'x': end['x'], 'y': current_position}, 'R' + str(resistor_idx), 'vertical')
                                 resistor_idx += 1
                             elif element['type'] == 'capacitor':
                                 draw_capacitor({'x': end['x'], 'y': current_position}, 'C' + str(capacitor_idx), 'vertical')
@@ -117,13 +116,13 @@ class CircuitVisualize:
                                 draw_inductor({'x': end['x'], 'y': current_position}, 'L' + str(inductor_idx), 'vertical')
                                 inductor_idx += 1
                             elif element['type'] == 'voltage_source':
-                                draw_voltage_source({'x': end['x'], 'y': current_position},
-                                                    'V' + str(voltage_source_idx), 'vertical')
+                                draw_voltage_source({'x': end['x'], 'y': current_position}, 'V' + str(voltage_source_idx), 'vertical')
                                 voltage_source_idx += 1
                             elif element['type'] == 'current_source':
-                                draw_current_source({'x': end['x'], 'y': current_position},
-                                                    'I' + str(current_source_idx), 'vertical')
+                                draw_current_source({'x': end['x'], 'y': current_position}, 'I' + str(current_source_idx), 'vertical')
                                 current_source_idx += 1
+                            elif element['type'] == 'opening_switch' or element['type'] == 'closing_switch':
+                                draw_switch({'x': end['x'], 'y': current_position}, 'vertical')
                             current_position += 2 * step
                     elif start['y'] == end['y']:
                         step = (abs(end['x'] - start['x']) / num_elements) / 2
@@ -140,13 +139,13 @@ class CircuitVisualize:
                                 draw_inductor({'x': current_position, 'y': end['y']}, 'L' + str(inductor_idx), 'horizontal')
                                 inductor_idx += 1
                             elif element['type'] == 'voltage_source':
-                                draw_voltage_source({'x': current_position, 'y': end['y']},
-                                                    'V' + str(voltage_source_idx), 'horizontal')
+                                draw_voltage_source({'x': current_position, 'y': end['y']}, 'V' + str(voltage_source_idx), 'horizontal')
                                 voltage_source_idx += 1
                             elif element['type'] == 'current_source':
-                                draw_current_source({'x': current_position, 'y': end['y']},
-                                                    'I' + str(current_source_idx), 'horizontal')
+                                draw_current_source({'x': current_position, 'y': end['y']}, 'I' + str(current_source_idx), 'horizontal')
                                 current_source_idx += 1
+                            elif element['type'] == 'opening_switch' or element['type'] == 'closing_switch':
+                                draw_switch({'x': current_position, 'y': end['y']}, 'horizontal')
                             current_position += 2 * step
 
                 elif num_lines > 1:
@@ -183,6 +182,8 @@ class CircuitVisualize:
                                 elif element['type'] == 'current_source':
                                     draw_current_source(pos, 'I' + str(current_source_idx), 'vertical')
                                     current_source_idx += 1
+                                elif element['type'] == 'opening_switch' or element['type'] == 'closing_switch':
+                                    draw_switch(pos, 'vertical')
                                 current_position += 2 * step
 
                         elif start['y'] == end['y']:
@@ -206,6 +207,8 @@ class CircuitVisualize:
                                 elif element['type'] == 'current_source':
                                     draw_current_source(pos, 'I' + str(current_source_idx), 'horizontal')
                                     current_source_idx += 1
+                                elif element['type'] == 'opening_switch' or element['type'] == 'closing_switch':
+                                    draw_switch(pos, 'horizontal')
                                 current_position += 2 * step
 
         plt.axis('off')

@@ -296,3 +296,37 @@ def draw_inductor(center, name, orientation):
         ha, va = 'left', 'center'
 
     plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
+
+
+def draw_switch(center, orientation):
+    width = SCALE / 10
+    gap = SCALE / 10
+    wire_length = (width - gap) / 2
+
+    if orientation == 'horizontal':
+        x1 = center['x'] - width / 2
+        x2 = center['x'] + width / 2
+        y = center['y']
+
+        plt.plot([x1, x1 + wire_length], [y, y], color='black', linewidth=1.0, zorder=9)
+        plt.plot([x2 - wire_length, x2], [y, y], color='black', linewidth=1.0, zorder=9)
+
+        plt.plot([x1 + wire_length, x2 - wire_length], [y, y], color='white', linewidth=1.5, zorder=10)
+
+        contact_x = [x1 + wire_length, x2 - wire_length]
+        contact_y = [y, y + SCALE / 40]
+        plt.plot(contact_x, contact_y, color='black', linewidth=1.0, zorder=11)
+
+    elif orientation == 'vertical':
+        y1 = center['y'] - width / 2
+        y2 = center['y'] + width / 2
+        x = center['x']
+
+        plt.plot([x, x], [y1, y1 + wire_length], color='black', linewidth=1.0, zorder=9)
+        plt.plot([x, x], [y2 - wire_length, y2], color='black', linewidth=1.0, zorder=9)
+
+        plt.plot([x, x], [y1 + wire_length, y2 - wire_length], color='white', linewidth=1.5, zorder=10)
+
+        contact_y = [y1 + wire_length, y2 - wire_length]
+        contact_x = [x, x + SCALE / 40]
+        plt.plot(contact_x, contact_y, color='black', linewidth=1.0, zorder=11)

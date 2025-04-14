@@ -7,7 +7,7 @@ from docx import Document
 from docx.shared import Inches
 from PIL import Image
 
-from src.coupling_coefficient.electric_circuit import ElectricCircuit
+from src.common.electric_circuit import ElectricCircuit
 from src.coupling_coefficient.elements_places import ElementsPlacer
 from src.coupling_coefficient.visualize_circuit import CircuitVisualize
 
