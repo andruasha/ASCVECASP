@@ -330,3 +330,20 @@ def draw_switch(center, orientation):
         contact_y = [y1 + wire_length, y2 - wire_length]
         contact_x = [x, x + SCALE / 40]
         plt.plot(contact_x, contact_y, color='black', linewidth=1.0, zorder=11)
+
+
+def draw_circle(center, name, color='red'):
+    radius = SCALE / 40
+
+    circle = plt.Circle(
+        (center['x'], center['y']),
+        radius,
+        linewidth=1.0,
+        edgecolor=color,
+        facecolor='white',
+        zorder=10
+    )
+
+    plt.gca().add_patch(circle)
+    plt.text(center['x'], center['y'] - radius * 1.5, name,
+             fontsize=6, ha='center', va='top', color='blue', zorder=11)

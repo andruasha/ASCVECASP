@@ -8,8 +8,8 @@ from docx.shared import Inches
 from PIL import Image
 
 from src.common.electric_circuit import ElectricCircuit
-from src.transient_processes.elements_places import ElementsPlacer
-from src.transient_processes.visualize_circuit import CircuitVisualize
+from src.active_quadripole.elements_places import ElementsPlacer
+from src.active_quadripole.visualize_circuit import CircuitVisualize
 
 from conf.config import SCALE
 
@@ -238,7 +238,7 @@ def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num,
     print(f'Файл сохранён: {OUTPUT_DOCX}')
 
 
-def generate_transient_processes_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num):
+def generate_active_quadripole_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num):
     generate_schemes_set(
         nodes_num=nodes_num,
         branches_num=branches_num,
