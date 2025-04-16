@@ -1,258 +1,570 @@
-import random
 import matplotlib.pyplot as plt
-import os
-import itertools
+import random
 
-from docx import Document
-from docx.shared import Inches
-from PIL import Image
-
-from src.common.electric_circuit import ElectricCircuit
-from src.active_quadripole.elements_places import ElementsPlacer
-from src.active_quadripole.visualize_circuit import CircuitVisualize
+from src.common.draw_functions import draw_resistor, draw_capacitor, draw_inductor
 
 from conf.config import SCALE
 
 
-MAX_IMAGE_WIDTH_INCHES = 3
-NUMBER_COL_WIDTH = Inches(0.8)
-SCHEMES_FOLDER = 'schemes'
-OUTPUT_DOCX = 'generated_schemes.docx'
+def generate_active_quadripole_scheme_topology(scheme_type):
+    all_nodes = {}
+    scheme_nodes = {}
+    quadripole_nodes = {}
+    scheme_layout = {}
+    if scheme_type == 'G':
+        all_nodes = {
+            'node1': {'x': 0, 'y': SCALE},
+            'node2': {'x': SCALE / 2, 'y': SCALE},
+            'node3': {'x': 3 * SCALE / 2, 'y': SCALE},
+            'node4': {'x': 0, 'y': 0},
+            'node5': {'x': SCALE / 2, 'y': 0},
+            'node6': {'x': 3 * SCALE / 2, 'y': 0}
+        }
+
+        scheme_nodes = {
+            'node2': {'x': SCALE/2, 'y': SCALE},
+            'node5': {'x': SCALE / 2, 'y': 0}
+        }
+
+        quadripole_nodes = {
+            'node1': {'x': 0, 'y': SCALE},
+            'node3': {'x': 3 * SCALE / 2, 'y': SCALE},
+            'node4': {'x': 0, 'y': 0},
+            'node6': {'x': 3 * SCALE / 2, 'y': 0}
+        }
+
+        scheme_layout = {
+            'node1->node2': [
+                {
+                    'connection_coords': [
+                        all_nodes['node1'],
+                        all_nodes['node2']
+                    ]
+                }
+            ],
+            'node2->node3': [
+                {
+                    'connection_coords': [
+                        all_nodes['node2'],
+                        all_nodes['node3']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node4->node5': [
+                {
+                    'connection_coords': [
+                        all_nodes['node4'],
+                        all_nodes['node5']
+                    ]
+                }
+            ],
+            'node5->node6': [
+                {
+                    'connection_coords': [
+                        all_nodes['node5'],
+                        all_nodes['node6']
+                    ]
+                }
+            ],
+            'node2->node5': [
+                {
+                    'connection_coords': [
+                        all_nodes['node2'],
+                        all_nodes['node5']
+                    ],
+                    'elements': []
+                }
+            ]
+        }
+
+    elif scheme_type == 'P':
+        all_nodes = {
+            'node1': {'x': 0, 'y': SCALE},
+            'node2': {'x': SCALE / 2, 'y': SCALE},
+            'node3': {'x': 3 * SCALE / 2, 'y': SCALE},
+            'node4': {'x': 2 * SCALE, 'y': SCALE},
+            'node5': {'x': 0, 'y': 0},
+            'node6': {'x': SCALE / 2, 'y': 0},
+            'node7': {'x': 3 * SCALE / 2, 'y': 0},
+            'node8': {'x': 2 * SCALE, 'y': 0}
+        }
+
+        scheme_nodes = {
+            'node2': {'x': SCALE / 2, 'y': SCALE},
+            'node3': {'x': 3 * SCALE / 2, 'y': SCALE},
+            'node6': {'x': SCALE / 2, 'y': 0},
+            'node7': {'x': 3 * SCALE / 2, 'y': 0}
+        }
+
+        quadripole_nodes = {
+            'node1': {'x': 0, 'y': SCALE},
+            'node4': {'x': 2 * SCALE, 'y': SCALE},
+            'node5': {'x': 0, 'y': 0},
+            'node8': {'x': 2 * SCALE, 'y': 0}
+        }
+
+        scheme_layout = {
+            'node1->node2': [
+                {
+                    'connection_coords': [
+                        all_nodes['node1'],
+                        all_nodes['node2']
+                    ]
+                }
+            ],
+            'node2->node3': [
+                {
+                    'connection_coords': [
+                        all_nodes['node2'],
+                        all_nodes['node3']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node3->node4': [
+                {
+                    'connection_coords': [
+                        all_nodes['node3'],
+                        all_nodes['node4']
+                    ]
+                }
+            ],
+            'node5->node6': [
+                {
+                    'connection_coords': [
+                        all_nodes['node5'],
+                        all_nodes['node6']
+                    ]
+                }
+            ],
+            'node6->node7': [
+                {
+                    'connection_coords': [
+                        all_nodes['node6'],
+                        all_nodes['node7']
+                    ]
+                }
+            ],
+            'node7->node8': [
+                {
+                    'connection_coords': [
+                        all_nodes['node7'],
+                        all_nodes['node8']
+                    ]
+                }
+            ],
+            'node2->node6': [
+                {
+                    'connection_coords': [
+                        all_nodes['node2'],
+                        all_nodes['node6']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node3->node7': [
+                {
+                    'connection_coords': [
+                        all_nodes['node3'],
+                        all_nodes['node7']
+                    ],
+                    'elements': []
+                }
+            ]
+        }
+
+    elif scheme_type == 'T':
+        all_nodes = {
+            'node1': {'x': 0, 'y': SCALE},
+            'node2': {'x': SCALE, 'y': SCALE},
+            'node3': {'x': 2 * SCALE, 'y': SCALE},
+            'node4': {'x': 0, 'y': 0},
+            'node5': {'x': SCALE, 'y': 0},
+            'node6': {'x': 2 * SCALE, 'y': 0}
+        }
+
+        scheme_nodes = {
+            'node2': {'x': SCALE, 'y': SCALE},
+            'node5': {'x': SCALE, 'y': 0}
+        }
+
+        quadripole_nodes = {
+            'node1': {'x': 0, 'y': SCALE},
+            'node3': {'x': 2 * SCALE, 'y': SCALE},
+            'node4': {'x': 0, 'y': 0},
+            'node6': {'x': 2 * SCALE, 'y': 0}
+        }
+
+        scheme_layout = {
+            'node1->node2': [
+                {
+                    'connection_coords': [
+                        all_nodes['node1'],
+                        all_nodes['node2']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node2->node3': [
+                {
+                    'connection_coords': [
+                        all_nodes['node2'],
+                        all_nodes['node3']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node4->node5': [
+                {
+                    'connection_coords': [
+                        all_nodes['node4'],
+                        all_nodes['node5']
+                    ]
+                }
+            ],
+            'node5->node6': [
+                {
+                    'connection_coords': [
+                        all_nodes['node5'],
+                        all_nodes['node6']
+                    ]
+                }
+            ],
+            'node2->node5': [
+                {
+                    'connection_coords': [
+                        all_nodes['node2'],
+                        all_nodes['node5']
+                    ],
+                    'elements': []
+                }
+            ],
+        }
+
+    elif scheme_type == 'T_bridge':
+        all_nodes = {
+            'node1': {'x': 0, 'y': SCALE},
+            'node2': {'x': SCALE / 2, 'y': SCALE},
+            'node3': {'x': 3 * SCALE / 2, 'y': SCALE},
+            'node4': {'x': 2 * SCALE, 'y': SCALE},
+            'node5': {'x': 0, 'y': 0},
+            'node6': {'x': SCALE / 2, 'y': 0},
+            'node7': {'x': 3 * SCALE / 2, 'y': 0},
+            'node8': {'x': 2 * SCALE, 'y': 0}
+        }
+
+        scheme_nodes = {
+            'node2': {'x': SCALE / 2, 'y': SCALE},
+            'node3': {'x': 3 * SCALE / 2, 'y': SCALE},
+            'node6': {'x': SCALE / 2, 'y': 0},
+            'node7': {'x': 3 * SCALE / 2, 'y': 0}
+        }
+
+        quadripole_nodes = {
+            'node1': {'x': 0, 'y': SCALE},
+            'node4': {'x': 2 * SCALE, 'y': SCALE},
+            'node5': {'x': 0, 'y': 0},
+            'node8': {'x': 2 * SCALE, 'y': 0}
+        }
+
+        scheme_layout = {
+            'node1->node2': [
+                {
+                    'connection_coords': [
+                        all_nodes['node1'],
+                        all_nodes['node2']
+                    ]
+                }
+            ],
+            'node2->node3': [
+                {
+                    'connection_coords': [
+                        all_nodes['node2'],
+                        all_nodes['node3']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node3->node4': [
+                {
+                    'connection_coords': [
+                        all_nodes['node3'],
+                        all_nodes['node4']
+                    ]
+                }
+            ],
+            'node5->node6': [
+                {
+                    'connection_coords': [
+                        all_nodes['node5'],
+                        all_nodes['node6']
+                    ]
+                }
+            ],
+            'node6->node7': [
+                {
+                    'connection_coords': [
+                        all_nodes['node6'],
+                        all_nodes['node7']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node7->node8': [
+                {
+                    'connection_coords': [
+                        all_nodes['node7'],
+                        all_nodes['node8']
+                    ]
+                }
+            ],
+            'node2->node7': [
+                {
+                    'connection_coords': [
+                        all_nodes['node2'],
+                        all_nodes['node7']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node3->node6': [
+                {
+                    'connection_coords': [
+                        all_nodes['node3'],
+                        all_nodes['node6']
+                    ],
+                    'elements': []
+                }
+            ]
+        }
+
+    elif scheme_type == 'T_back_coupling':
+        all_nodes = {
+            'node1': {'x': 0, 'y': SCALE},
+            'node2': {'x': SCALE / 2, 'y': SCALE},
+            'node3': {'x': 3 * SCALE / 2, 'y': SCALE},
+            'node4': {'x': 5 * SCALE / 2, 'y': SCALE},
+            'node5': {'x': 3 * SCALE, 'y': SCALE},
+            'node6': {'x': 0, 'y': 0},
+            'node7': {'x': 3 * SCALE / 2, 'y': 0},
+            'node8': {'x': 3 * SCALE, 'y': 0}
+        }
+
+        scheme_nodes = {
+            'node2': {'x': SCALE / 2, 'y': SCALE},
+            'node3': {'x': 3 * SCALE / 2, 'y': SCALE},
+            'node4': {'x': 5 * SCALE / 2, 'y': SCALE},
+            'node7': {'x': 3 * SCALE / 2, 'y': 0},
+        }
+
+        quadripole_nodes = {
+            'node1': {'x': 0, 'y': SCALE},
+            'node5': {'x': 3 * SCALE, 'y': SCALE},
+            'node6': {'x': 0, 'y': 0},
+            'node8': {'x': 3 * SCALE, 'y': 0}
+        }
+
+        scheme_layout = {
+            'node1->node2': [
+                {
+                    'connection_coords': [
+                        all_nodes['node1'],
+                        all_nodes['node2']
+                    ]
+                }
+            ],
+            'node2->node3': [
+                {
+                    'connection_coords': [
+                        all_nodes['node2'],
+                        all_nodes['node3']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node3->node4': [
+                {
+                    'connection_coords': [
+                        all_nodes['node3'],
+                        all_nodes['node4']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node4->node5': [
+                {
+                    'connection_coords': [
+                        all_nodes['node4'],
+                        all_nodes['node5']
+                    ]
+                }
+            ],
+            'node2->node4': [
+                {
+                    'connection_coords': [
+                        all_nodes['node2'],
+                        {'x': all_nodes['node2']['x'], 'y': all_nodes['node2']['y'] + SCALE/2},
+                        {'x': all_nodes['node4']['x'], 'y': all_nodes['node4']['y'] + SCALE/2},
+                        all_nodes['node4']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node6->node7': [
+                {
+                    'connection_coords': [
+                        all_nodes['node6'],
+                        all_nodes['node7']
+                    ]
+                }
+            ],
+            'node7->node8': [
+                {
+                    'connection_coords': [
+                        all_nodes['node7'],
+                        all_nodes['node8']
+                    ]
+                }
+            ],
+            'node3->node7': [
+                {
+                    'connection_coords': [
+                        all_nodes['node3'],
+                        all_nodes['node7']
+                    ],
+                    'elements': []
+                }
+            ]
+        }
+
+    return scheme_nodes, quadripole_nodes, scheme_layout
 
 
-def compare_topologies(circuit_topology_1, circuit_topology_2):
-    def normalize_connection(node_a, node_b):
-        return "->".join(sorted([node_a, node_b]))
-
-    def get_topology_representation(circuit_topology):
-        representation = {}
-        for conn_name, conn_coords in circuit_topology.nodes_connections.items():
-            node1, node2 = conn_name.split('->')
-            key = normalize_connection(node1, node2)
-            if key not in representation:
-                representation[key] = 0
-            representation[key] += len(conn_coords)
-        return representation
-
-    rep1 = get_topology_representation(circuit_topology_1)
-    rep2 = get_topology_representation(circuit_topology_2)
-
-    return rep1 == rep2
-
-
-def compare_layouts(circuit_layout_1, circuit_layout_2):
-    absolutely_unique = True
-    for connection_name_1, connection_params_1 in circuit_layout_1.items():
-        for connection_name_2, connection_params_2 in circuit_layout_2.items():
-            splited_name_1 = connection_name_1.split('->')
-            if (connection_name_2 == connection_params_1) or (
-                    connection_name_2 == f"{splited_name_1[1]}->{splited_name_1[0]}"):
-                if len(connection_params_1) == len(connection_params_2):
-                    connection_elements_1 = []
-                    connection_elements_2 = []
-
-                    for sub_connection in connection_params_1:
-                        connection_elements_1.append(sub_connection[0]['elements'])
-
-                    for sub_connection in connection_params_2:
-                        connection_elements_2.append(sub_connection[0]['elements'])
-
-                    set1 = {tuple(sorted(tuple(element.items()) for element in sub_list))
-                            for sub_list in connection_elements_1}
-                    set2 = {tuple(sorted(tuple(element.items()) for element in sub_list))
-                            for sub_list in connection_elements_2}
-
-                    if set1 != set2:
-                        absolutely_unique = False
-
-    return absolutely_unique
-
-
-def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num):
-    template_two_nodes_1 = {'node1': {'x': 0, 'y': 0},
-                            'node2': {'x': SCALE, 'y': 0}}
-
-    template_three_nodes_1 = {'node1': {'x': 0, 'y': 0},
-                              'node2': {'x': 0, 'y': SCALE},
-                              'node3': {'x': SCALE, 'y': SCALE}}
-
-    template_four_nodes_1 = {'node1': {'x': 0, 'y': 0},
-                             'node2': {'x': 0, 'y': SCALE},
-                             'node3': {'x': SCALE, 'y': SCALE},
-                             'node4': {'x': SCALE, 'y': 0}}
-
-    template_four_nodes_2 = {'node1': {'x': 0, 'y': SCALE},
-                             'node2': {'x': SCALE, 'y': SCALE},
-                             'node3': {'x': 2 * SCALE, 'y': SCALE},
-                             'node4': {'x': SCALE, 'y': 0}}
-
-    def get_unique_topologies(topologies, needed_count):
-        unique = []
-        for topo in topologies:
-            if all(not compare_topologies(topo, u) for u in unique):
-                unique.append(topo)
-                if len(unique) >= needed_count:
-                    break
-        return unique
-
-    circuits_topologies = []
-
-    if nodes_num == 2:
-        raw_topologies = [ElectricCircuit(branches_num=branches_num, nodes=template_two_nodes_1).create_nodes_connections() for _ in range(100)]
-        circuits_topologies = get_unique_topologies(raw_topologies, 30)
-
-    elif nodes_num == 3:
-        raw_topologies = [ElectricCircuit(branches_num=branches_num, nodes=template_three_nodes_1).create_nodes_connections() for _ in range(500)]
-        circuits_topologies = get_unique_topologies(raw_topologies, 30)
-
-    elif nodes_num == 4:
-        circuits_topologies_1 = [ElectricCircuit(branches_num=branches_num, nodes=template_four_nodes_1).create_nodes_connections() for _ in range(300)]
-        circuits_topologies_2 = [ElectricCircuit(branches_num=branches_num, nodes=template_four_nodes_2).create_nodes_connections() for _ in range(300)]
-
-        unique_1 = get_unique_topologies(circuits_topologies_1, 15)
-        unique_2 = get_unique_topologies(circuits_topologies_2, 15)
-        circuits_topologies = unique_1 + unique_2
-
-        if len(circuits_topologies) < 30:
-            print(f'[Warning] Удалось сгенерировать только {len(circuits_topologies)} уникальных топологий.')
-            print(f'[Info] Добираем ещё {30 - len(circuits_topologies)} топологий случайным образом (с возможными повторами).')
-            all_topos = circuits_topologies_1 + circuits_topologies_2
-            while len(circuits_topologies) < 30:
-                circuits_topologies.append(random.choice(all_topos))
-
-        random.shuffle(circuits_topologies)
-
-    if len(circuits_topologies) < 30:
-        print(f'[Warning] Удалось сгенерировать только {len(circuits_topologies)} уникальных топологий.')
-        print(f'[Info] Добираем ещё {30 - len(circuits_topologies)} топологий случайным образом (с возможными повторами).')
-        while len(circuits_topologies) < 30:
-            circuits_topologies.append(random.choice(raw_topologies))
-
-    circuits = []
-    circuits_topologies_paired = []
-
-    for circuit_topology in circuits_topologies:
-        placed_circuit = ElementsPlacer(circuit_topology,
-                                        voltage_sources_num,
-                                        current_sources_num,
-                                        resistors_num,
-                                        inductors_num,
-                                        capacitors_num).place_elements()
-        circuits.append(placed_circuit)
-        circuits_topologies_paired.append((circuit_topology, placed_circuit))
-
-    unique_schemes = []
-
-    for i in range(len(circuits_topologies_paired)):
-        topology_1, circuit_1 = circuits_topologies_paired[i]
-        is_unique = True
-
-        for existing_topology, existing_circuit in unique_schemes:
-            if compare_layouts(circuit_1.layout, existing_circuit.layout) and compare_topologies(topology_1, existing_topology):
-                is_unique = False
-                break
-
-        if is_unique:
-            unique_schemes.append((topology_1, circuit_1))
-
-    if len(unique_schemes) < 30:
-        print(f'[Warning] Удалось сгенерировать только {len(unique_schemes)} уникальных схем')
-
-    index = 1
-    for topology, circuit in circuits_topologies_paired:
-        visualizer = CircuitVisualize(circuit, topology)
-        visualizer.visualize()
-
-        fig = plt.gcf()
-        fig.savefig(f'{SCHEMES_FOLDER}/scheme_{index}.png', dpi=300, bbox_inches='tight', pad_inches=0)
-        plt.close(fig)
-
-        # ltspice_path = os.path.join(SCHEMES_FOLDER, f'scheme_{index}.cir')
-        # visualizer.export_to_ltspice(filename=ltspice_path)
-
-        index += 1
-
-
-def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num):
-    doc = Document()
-
-    table = doc.add_table(rows=1, cols=3)
-    table.style = 'Table Grid'
-    table.allow_autofit = False
-
-    hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = 'Номер варианта'
-    hdr_cells[1].text = 'Схема'
-    hdr_cells[2].text = 'Номиналы'
-    hdr_cells[0].width = NUMBER_COL_WIDTH
-    hdr_cells[1].width = MAX_IMAGE_WIDTH_INCHES
-    hdr_cells[2].width = Inches(2.5)
-
-    for i in range(1, 31):
-        row_cells = table.add_row().cells
-        row_cells[0].text = str(i)
-        row_cells[0].width = NUMBER_COL_WIDTH
-        row_cells[1].width = MAX_IMAGE_WIDTH_INCHES
-        row_cells[2].width = Inches(2.5)
-
-        image_path = os.path.join(SCHEMES_FOLDER, f'scheme_{i}.png')
-        if os.path.exists(image_path):
-            with Image.open(image_path) as img:
-                width_px, height_px = img.size
-                dpi = img.info.get('dpi', (300, 300))[0]
-                width_in = width_px / dpi
-                scale = min(1.0, MAX_IMAGE_WIDTH_INCHES / width_in)
-                display_width = Inches(width_in * scale)
-                row_cells[1].paragraphs[0].add_run().add_picture(image_path, width=display_width)
-        else:
-            row_cells[1].text = 'Изображение не найдено'
-
-        descriptions = []
-
-        for v in range(1, voltage_sources_num + 1):
-            voltage = random.randint(15, 310)
-            descriptions.append(f"V{v}={voltage} В")
-
-        for r in range(1, resistors_num + 1):
-            resistance = random.randint(5, 100)
-            descriptions.append(f"R{r}={resistance} Ом")
-
-        for r in range(1, capacitors_num + 1):
-            capacity = round(random.uniform(0.05, 1), 2)
-            descriptions.append(f"C{r}={capacity} мкФ")
-
-        for r in range(1, inductors_num + 1):
-            inductance = random.randint(1, 20)
-            descriptions.append(f"L{r}={inductance} мГн")
-
-        for c in range(1, current_sources_num + 1):
-            current = round(random.uniform(0.15, 3), 2)
-            descriptions.append(f"I{c}={current} А")
-
-        frequency = random.randint(1, 20)
-        descriptions.append(f"f={frequency} кГц")
-
-        row_cells[2].text = '\n'.join(descriptions)
-
-    doc.save(OUTPUT_DOCX)
-    print(f'Файл сохранён: {OUTPUT_DOCX}')
-
-
-def generate_active_quadripole_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num):
-    generate_schemes_set(
-        nodes_num=nodes_num,
-        branches_num=branches_num,
-        voltage_sources_num=voltage_sources_num,
-        current_sources_num=current_sources_num,
-        resistors_num=resistors_num,
-        capacitors_num=capacitors_num,
-        inductors_num=inductors_num
+def place_elements(scheme_layout, resistors_num, inductors_num, capacitors_num):
+    elements = (
+        ['resistor'] * resistors_num +
+        ['inductor'] * inductors_num +
+        ['capacitor'] * capacitors_num
     )
 
-    add_schemes_to_word(
-        voltage_sources_num=voltage_sources_num,
-        current_sources_num=current_sources_num,
+    branches = [key for key, value in scheme_layout.items() if 'elements' in value[0]]
+
+    random.shuffle(elements)
+    for branch in branches:
+        if elements:
+            scheme_layout[branch][0]['elements'].append(elements.pop())
+
+    while elements:
+        branches.sort(key=lambda branch: len(scheme_layout[branch][0].get('elements', [])))
+        scheme_layout[branches[0]][0]['elements'].append(elements.pop())
+
+
+def visualise_active_quadripole_scheme(scheme_nodes, quadripole_nodes, scheme_layout):
+
+    plt.figure(figsize=(5, 5))
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray')
+    plt.xticks(range(-13, 14, 1))
+    plt.yticks(range(-13, 14, 1))
+    plt.xlim(-13, 13)
+    plt.ylim(-13, 13)
+    plt.axis('equal')
+
+    for node, coords in scheme_nodes.items():
+        plt.plot(coords['x'], coords['y'], 'ko', markersize=3)
+    for node, coords in quadripole_nodes.items():
+        plt.plot(coords['x'], coords['y'], 'ro', markersize=3, zorder=11)
+
+    resistor_idx = 1
+    capacitor_idx = 1
+    inductor_idx = 1
+
+    for connections in scheme_layout.values():
+        for segment in connections:
+            coords = segment['connection_coords']
+            for i in range(len(coords) - 1):
+                start = coords[i]
+                end = coords[i + 1]
+                plt.plot([start['x'], end['x']], [start['y'], end['y']], 'k-', linewidth=1)
+
+            if 'elements' not in segment:
+                continue
+
+            elements = segment['elements']
+            num_elements = len(elements)
+
+            if num_elements == 0:
+                continue
+
+            lines = []
+            for i in range(len(coords) - 1):
+                lines.append((coords[i], coords[i + 1]))
+
+            num_lines = len(lines)
+            elements_per_line = num_elements // num_lines
+            extra = num_elements % num_lines
+
+            element_iter = iter(elements)
+
+            for idx, (start, end) in enumerate(lines):
+                count = elements_per_line + (1 if idx < extra else 0)
+                if count == 0:
+                    continue
+
+                if start['x'] == end['x']:
+                    step = (abs(end['y'] - start['y']) / count) / 2
+                    pos_y = min(start['y'], end['y']) + step
+                    for _ in range(count):
+                        pos = {'x': start['x'], 'y': pos_y}
+                        el = next(element_iter)
+                        if el == 'resistor':
+                            draw_resistor(pos, f'R{resistor_idx}', 'vertical')
+                            resistor_idx += 1
+                        elif el == 'capacitor':
+                            draw_capacitor(pos, f'C{capacitor_idx}', 'vertical')
+                            capacitor_idx += 1
+                        elif el == 'inductor':
+                            draw_inductor(pos, f'L{inductor_idx}', 'vertical')
+                            inductor_idx += 1
+                        pos_y += 2 * step
+
+                elif start['y'] == end['y']:
+                    step = (abs(end['x'] - start['x']) / count) / 2
+                    pos_x = min(start['x'], end['x']) + step
+                    for _ in range(count):
+                        pos = {'x': pos_x, 'y': start['y']}
+                        el = next(element_iter)
+                        if el == 'resistor':
+                            draw_resistor(pos, f'R{resistor_idx}', 'horizontal')
+                            resistor_idx += 1
+                        elif el == 'capacitor':
+                            draw_capacitor(pos, f'C{capacitor_idx}', 'horizontal')
+                            capacitor_idx += 1
+                        elif el == 'inductor':
+                            draw_inductor(pos, f'L{inductor_idx}', 'horizontal')
+                            inductor_idx += 1
+                        pos_x += 2 * step
+                else:
+                    continue
+
+    plt.axis('off')
+    plt.show()
+
+
+def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors_num, capacitors_num):
+    scheme_nodes, quadripole_nodes, scheme_layout = generate_active_quadripole_scheme_topology(
+        scheme_type=scheme_type
+    )
+
+    place_elements(
+        scheme_layout=scheme_layout,
         resistors_num=resistors_num,
-        capacitors_num=capacitors_num,
-        inductors_num=inductors_num
+        inductors_num=inductors_num,
+        capacitors_num=capacitors_num
+    )
+
+    visualise_active_quadripole_scheme(
+        scheme_nodes=scheme_nodes,
+        quadripole_nodes=quadripole_nodes,
+        scheme_layout=scheme_layout
     )
