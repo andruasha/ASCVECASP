@@ -51,8 +51,8 @@ from src.active_quadripole.main import generate_active_quadripole_schemes_set
 # )
 
 generate_active_quadripole_schemes_set(
-    scheme_type="T_back_coupling",
-    resistors_num=6,
+    scheme_type="T_bridge",
+    resistors_num=8,
     capacitors_num=2,
     inductors_num=2
 )

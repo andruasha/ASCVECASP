@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import random
 
 from src.common.draw_functions import draw_resistor, draw_capacitor, draw_inductor
@@ -511,8 +512,11 @@ def visualise_active_quadripole_scheme(scheme_nodes, quadripole_nodes, scheme_la
                 if count == 0:
                     continue
 
-                if start['x'] == end['x']:
-                    step = (abs(end['y'] - start['y']) / count) / 2
+                dx = end['x'] - start['x']
+                dy = end['y'] - start['y']
+
+                if dx == 0 and dy != 0:
+                    step = (abs(dy) / count) / 2
                     pos_y = min(start['y'], end['y']) + step
                     for _ in range(count):
                         pos = {'x': start['x'], 'y': pos_y}
@@ -528,8 +532,8 @@ def visualise_active_quadripole_scheme(scheme_nodes, quadripole_nodes, scheme_la
                             inductor_idx += 1
                         pos_y += 2 * step
 
-                elif start['y'] == end['y']:
-                    step = (abs(end['x'] - start['x']) / count) / 2
+                elif dy == 0 and dx != 0:
+                    step = (abs(dx) / count) / 2
                     pos_x = min(start['x'], end['x']) + step
                     for _ in range(count):
                         pos = {'x': pos_x, 'y': start['y']}
@@ -544,8 +548,33 @@ def visualise_active_quadripole_scheme(scheme_nodes, quadripole_nodes, scheme_la
                             draw_inductor(pos, f'L{inductor_idx}', 'horizontal')
                             inductor_idx += 1
                         pos_x += 2 * step
+
                 else:
-                    continue
+                    length = np.sqrt(dx ** 2 + dy ** 2)
+                    angle = np.arctan2(dy, dx)
+
+                    if abs(angle) < np.pi / 2:
+                        orientation = 'diagonal' if dy > 0 else '-diagonal'
+                    else:
+                        orientation = '-diagonal' if dy > 0 else 'diagonal'
+
+                    valid_t = np.linspace(0.1, 0.9, count * 2)
+                    valid_t = [t for t in valid_t if t < 0.4 or t > 0.6][:count]
+
+                    for t in valid_t:
+                        pos_x = start['x'] + t * dx
+                        pos_y = start['y'] + t * dy
+                        pos = {'x': pos_x, 'y': pos_y}
+                        el = next(element_iter)
+                        if el == 'resistor':
+                            draw_resistor(pos, f'R{resistor_idx}', orientation)
+                            resistor_idx += 1
+                        elif el == 'capacitor':
+                            draw_capacitor(pos, f'C{capacitor_idx}', orientation)
+                            capacitor_idx += 1
+                        elif el == 'inductor':
+                            draw_inductor(pos, f'L{inductor_idx}', orientation)
+                            inductor_idx += 1
 
     plt.axis('off')
     plt.show()

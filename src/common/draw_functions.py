@@ -1,7 +1,8 @@
 from conf.config import SCALE
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle, Polygon
 
 
 def draw_resistor(center, name, orientation):
@@ -10,25 +11,314 @@ def draw_resistor(center, name, orientation):
 
     if orientation == 'horizontal':
         lower_left = (center['x'] - width / 2, center['y'] - height / 2)
-        rect_width, rect_height = width, height
+        rect = Rectangle(
+            lower_left,
+            width, height,
+            linewidth=1.0,
+            edgecolor='black',
+            facecolor='white',
+            zorder=10
+        )
         text_x, text_y = center['x'], center['y'] - height * 1.2
         ha, va = 'center', 'top'
-    if orientation == 'vertical':
+
+    elif orientation == 'vertical':
         lower_left = (center['x'] - height / 2, center['y'] - width / 2)
-        rect_width, rect_height = height, width
+        rect = Rectangle(
+            lower_left,
+            height, width,
+            linewidth=1.0,
+            edgecolor='black',
+            facecolor='white',
+            zorder=10
+        )
         text_x, text_y = center['x'] + height * 1.2, center['y']
         ha, va = 'left', 'center'
 
-    rect = plt.Rectangle(
-        lower_left,
-        rect_width, rect_height,
-        linewidth=1.0,
-        edgecolor='black',
-        facecolor='white',
-        zorder=10
-    )
+    elif orientation == 'diagonal':
+        half_diag = np.sqrt(width ** 2 + height ** 2) / 2
+        angle = np.arctan(height / width)
+        x_offset = half_diag * np.cos(np.pi / 4 + angle)
+        y_offset = half_diag * np.sin(np.pi / 4 + angle)
+
+        points = [
+            (center['x'] - x_offset, center['y'] - y_offset),
+            (center['x'] - x_offset + width * np.cos(np.pi / 4), center['y'] - y_offset + width * np.sin(np.pi / 4)),
+            (center['x'] - x_offset + width * np.cos(np.pi / 4) - height * np.sin(np.pi / 4),
+             center['y'] - y_offset + width * np.sin(np.pi / 4) + height * np.cos(np.pi / 4)),
+            (center['x'] - x_offset - height * np.sin(np.pi / 4), center['y'] - y_offset + height * np.cos(np.pi / 4))
+        ]
+        rect = Polygon(
+            points,
+            closed=True,
+            linewidth=1.0,
+            edgecolor='black',
+            facecolor='white',
+            zorder=10
+        )
+        text_x, text_y = center['x'] - height * 0.85, center['y'] - height * 0.85
+        ha, va = 'center', 'top'
+
+    elif orientation == '-diagonal':
+        half_diag = np.sqrt(width ** 2 + height ** 2) / 2
+        angle = np.arctan(height / width)
+        x_offset = half_diag * np.cos(3 * np.pi / 4 + angle)
+        y_offset = half_diag * np.sin(3 * np.pi / 4 + angle)
+
+        points = [
+            (center['x'] - x_offset, center['y'] - y_offset),
+            (center['x'] - x_offset + width * np.cos(3 * np.pi / 4),
+             center['y'] - y_offset + width * np.sin(3 * np.pi / 4)),
+            (center['x'] - x_offset + width * np.cos(3 * np.pi / 4) - height * np.sin(3 * np.pi / 4),
+             center['y'] - y_offset + width * np.sin(3 * np.pi / 4) + height * np.cos(3 * np.pi / 4)),
+            (center['x'] - x_offset - height * np.sin(3 * np.pi / 4),
+             center['y'] - y_offset + height * np.cos(3 * np.pi / 4))
+        ]
+        rect = Polygon(
+            points,
+            closed=True,
+            linewidth=1.0,
+            edgecolor='black',
+            facecolor='white',
+            zorder=10
+        )
+        text_x, text_y = center['x'] + height * 0.85, center['y'] - height * 0.85
+        ha, va = 'center', 'top'
 
     plt.gca().add_patch(rect)
+    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
+
+
+def draw_capacitor(center, name, orientation):
+    plate_length = SCALE / 20
+    gap = SCALE / 40
+    cover_thickness = SCALE / 80
+
+    if orientation == 'horizontal':
+        x1 = center['x'] - gap / 2
+        x2 = center['x'] + gap / 2
+        y_top = center['y'] + plate_length / 2
+        y_bottom = center['y'] - plate_length / 2
+
+        plt.plot([x1, x1], [y_bottom, y_top], color='black', linewidth=1.0, zorder=10)
+        plt.plot([x2, x2], [y_bottom, y_top], color='black', linewidth=1.0, zorder=10)
+
+        rect = Rectangle(
+            (x1, y_bottom),
+            x2 - x1, y_top - y_bottom,
+            facecolor='white',
+            edgecolor='none',
+            zorder=9.5
+        )
+        plt.gca().add_patch(rect)
+
+        text_x, text_y = center['x'], center['y'] - plate_length
+        ha, va = 'center', 'top'
+
+    elif orientation == 'vertical':
+        y1 = center['y'] - gap / 2
+        y2 = center['y'] + gap / 2
+        x_left = center['x'] - plate_length / 2
+        x_right = center['x'] + plate_length / 2
+
+        plt.plot([x_left, x_right], [y1, y1], color='black', linewidth=1.0, zorder=10)
+        plt.plot([x_left, x_right], [y2, y2], color='black', linewidth=1.0, zorder=10)
+
+        rect = Rectangle(
+            (x_left, y1),
+            x_right - x_left, y2 - y1,
+            facecolor='white',
+            edgecolor='none',
+            zorder=9.5
+        )
+        plt.gca().add_patch(rect)
+
+        text_x, text_y = center['x'] + plate_length, center['y']
+        ha, va = 'left', 'center'
+
+    elif orientation == 'diagonal':
+        angle = np.pi / 4
+        dx = plate_length / 2 * np.cos(angle + np.pi / 2)
+        dy = plate_length / 2 * np.sin(angle + np.pi / 2)
+
+        x1 = center['x'] - (gap / 2) * np.cos(angle)
+        y1 = center['y'] - (gap / 2) * np.sin(angle)
+        plt.plot([x1 - dx, x1 + dx], [y1 - dy, y1 + dy], color='black', linewidth=1.0, zorder=10)
+
+        x2 = center['x'] + (gap / 2) * np.cos(angle)
+        y2 = center['y'] + (gap / 2) * np.sin(angle)
+        plt.plot([x2 - dx, x2 + dx], [y2 - dy, y2 + dy], color='black', linewidth=1.0, zorder=10)
+
+        points = [
+            (x1 - dx, y1 - dy),
+            (x1 + dx, y1 + dy),
+            (x2 + dx, y2 + dy),
+            (x2 - dx, y2 - dy)
+        ]
+        rect = Polygon(
+            points,
+            closed=True,
+            facecolor='white',
+            edgecolor='none',
+            zorder=9.5
+        )
+        plt.gca().add_patch(rect)
+
+        text_x, text_y = center['x'] - plate_length * 0.7, center['y'] - plate_length * 0.7
+        ha, va = 'center', 'top'
+
+    elif orientation == '-diagonal':
+        angle = 3 * np.pi / 4
+        dx = plate_length / 2 * np.cos(angle + np.pi / 2)
+        dy = plate_length / 2 * np.sin(angle + np.pi / 2)
+
+        x1 = center['x'] - (gap / 2) * np.cos(angle)
+        y1 = center['y'] - (gap / 2) * np.sin(angle)
+        plt.plot([x1 - dx, x1 + dx], [y1 - dy, y1 + dy], color='black', linewidth=1.0, zorder=10)
+
+        x2 = center['x'] + (gap / 2) * np.cos(angle)
+        y2 = center['y'] + (gap / 2) * np.sin(angle)
+        plt.plot([x2 - dx, x2 + dx], [y2 - dy, y2 + dy], color='black', linewidth=1.0, zorder=10)
+
+        points = [
+            (x1 - dx, y1 - dy),
+            (x1 + dx, y1 + dy),
+            (x2 + dx, y2 + dy),
+            (x2 - dx, y2 - dy)
+        ]
+        rect = Polygon(
+            points,
+            closed=True,
+            facecolor='white',
+            edgecolor='none',
+            zorder=9.5
+        )
+        plt.gca().add_patch(rect)
+
+        text_x, text_y = center['x'] + plate_length * 0.7, center['y'] - plate_length * 0.7
+        ha, va = 'center', 'top'
+
+    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
+
+
+def draw_inductor(center, name, orientation):
+    num_loops = 3
+    loop_radius = SCALE / 40
+    loop_spacing = loop_radius * 2
+    total_length = loop_spacing * num_loops
+
+    if orientation == 'horizontal':
+        start_x = center['x'] - total_length / 2
+        y_center = center['y']
+
+        rect = Rectangle(
+            (start_x, y_center - loop_radius),
+            total_length, loop_radius * 2,
+            facecolor='white',
+            edgecolor='none',
+            zorder=9.5
+        )
+        plt.gca().add_patch(rect)
+
+        for i in range(num_loops):
+            theta = np.linspace(0, np.pi, 100)
+            x = start_x + i * loop_spacing + loop_radius * (1 - np.cos(theta))
+            y = y_center + loop_radius * np.sin(theta)
+            plt.plot(x, y, color='black', linewidth=1.0, zorder=10)
+
+        text_x, text_y = center['x'], center['y'] - loop_radius * 1.8
+        ha, va = 'center', 'top'
+
+    elif orientation == 'vertical':
+        start_y = center['y'] - total_length / 2
+        x_center = center['x']
+
+        rect = Rectangle(
+            (x_center - loop_radius, start_y),
+            loop_radius * 2, total_length,
+            facecolor='white',
+            edgecolor='none',
+            zorder=9.5
+        )
+        plt.gca().add_patch(rect)
+
+        for i in range(num_loops):
+            theta = np.linspace(0, np.pi, 100)
+            y = start_y + i * loop_spacing + loop_radius * (1 - np.cos(theta))
+            x = x_center + loop_radius * np.sin(theta)
+            plt.plot(x, y, color='black', linewidth=1.0, zorder=10)
+
+        text_x, text_y = center['x'] + loop_radius * 1.8, center['y']
+        ha, va = 'left', 'center'
+
+    elif orientation == 'diagonal':
+        angle = np.pi / 4
+        start_x = center['x'] - (total_length / 2) * np.cos(angle)
+        start_y = center['y'] - (total_length / 2) * np.sin(angle)
+
+        points = [
+            (start_x - loop_radius * np.sin(angle), start_y + loop_radius * np.cos(angle)),
+            (start_x + total_length * np.cos(angle) - loop_radius * np.sin(angle),
+             start_y + total_length * np.sin(angle) + loop_radius * np.cos(angle)),
+            (start_x + total_length * np.cos(angle) + loop_radius * np.sin(angle),
+             start_y + total_length * np.sin(angle) - loop_radius * np.cos(angle)),
+            (start_x + loop_radius * np.sin(angle), start_y - loop_radius * np.cos(angle))
+        ]
+        rect = Polygon(
+            points,
+            closed=True,
+            facecolor='white',
+            edgecolor='none',
+            zorder=9.5
+        )
+        plt.gca().add_patch(rect)
+
+        for i in range(num_loops):
+            theta = np.linspace(0, np.pi, 100)
+            loop_x = start_x + i * loop_spacing * np.cos(angle) + loop_radius * (1 - np.cos(theta)) * np.cos(angle)
+            loop_y = start_y + i * loop_spacing * np.sin(angle) + loop_radius * (1 - np.cos(theta)) * np.sin(angle)
+            loop_x += loop_radius * np.sin(theta) * np.sin(angle)
+            loop_y -= loop_radius * np.sin(theta) * np.cos(angle)
+            plt.plot(loop_x, loop_y, color='black', linewidth=1.0, zorder=10)
+
+        text_x, text_y = center['x'] - loop_radius * 1.8 * np.cos(angle), center['y'] - loop_radius * 1.8 * np.sin(
+            angle)
+        ha, va = 'center', 'top'
+
+    elif orientation == '-diagonal':
+        angle = 3 * np.pi / 4
+        start_x = center['x'] - (total_length / 2) * np.cos(angle)
+        start_y = center['y'] - (total_length / 2) * np.sin(angle)
+
+        points = [
+            (start_x - loop_radius * np.sin(angle), start_y + loop_radius * np.cos(angle)),
+            (start_x + total_length * np.cos(angle) - loop_radius * np.sin(angle),
+             start_y + total_length * np.sin(angle) + loop_radius * np.cos(angle)),
+            (start_x + total_length * np.cos(angle) + loop_radius * np.sin(angle),
+             start_y + total_length * np.sin(angle) - loop_radius * np.cos(angle)),
+            (start_x + loop_radius * np.sin(angle), start_y - loop_radius * np.cos(angle))
+        ]
+        rect = Polygon(
+            points,
+            closed=True,
+            facecolor='white',
+            edgecolor='none',
+            zorder=9.5
+        )
+        plt.gca().add_patch(rect)
+
+        for i in range(num_loops):
+            theta = np.linspace(0, np.pi, 100)
+            loop_x = start_x + i * loop_spacing * np.cos(angle) + loop_radius * (1 - np.cos(theta)) * np.cos(angle)
+            loop_y = start_y + i * loop_spacing * np.sin(angle) + loop_radius * (1 - np.cos(theta)) * np.sin(angle)
+            loop_x += loop_radius * np.sin(theta) * np.sin(angle)
+            loop_y -= loop_radius * np.sin(theta) * np.cos(angle)
+            plt.plot(loop_x, loop_y, color='black', linewidth=1.0, zorder=10)
+
+        text_x, text_y = center['x'] - loop_radius * 1.8 * np.cos(angle), center['y'] - loop_radius * 1.8 * np.sin(
+            angle)
+        ha, va = 'center', 'top'
+
     plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
 
 
@@ -189,110 +479,6 @@ def draw_current_source(center, name, orientation):
             )
 
         text_x, text_y = center['x'] + radius * 1.8, center['y']
-        ha, va = 'left', 'center'
-
-    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
-
-
-def draw_capacitor(center, name, orientation):
-    plate_length = SCALE / 20
-    gap = SCALE / 40
-    cover_thickness = SCALE / 80
-
-    if orientation == 'horizontal':
-        x1 = center['x'] - gap / 2
-        x2 = center['x'] + gap / 2
-        y_top = center['y'] + plate_length / 2
-        y_bottom = center['y'] - plate_length / 2
-
-        plt.plot([x1, x1], [y_bottom, y_top], color='black', linewidth=1.0, zorder=10)
-        plt.plot([x2, x2], [y_bottom, y_top], color='black', linewidth=1.0, zorder=10)
-
-        rect = plt.Rectangle(
-            (x1, y_bottom),
-            x2 - x1, y_top - y_bottom,
-            facecolor='white',
-            edgecolor='none',
-            zorder=9.5
-        )
-        plt.gca().add_patch(rect)
-
-        text_x, text_y = center['x'], center['y'] - plate_length
-        ha, va = 'center', 'top'
-
-    elif orientation == 'vertical':
-        y1 = center['y'] - gap / 2
-        y2 = center['y'] + gap / 2
-        x_left = center['x'] - plate_length / 2
-        x_right = center['x'] + plate_length / 2
-
-        plt.plot([x_left, x_right], [y1, y1], color='black', linewidth=1.0, zorder=10)
-        plt.plot([x_left, x_right], [y2, y2], color='black', linewidth=1.0, zorder=10)
-
-        rect = plt.Rectangle(
-            (x_left, y1),
-            x_right - x_left, y2 - y1,
-            facecolor='white',
-            edgecolor='none',
-            zorder=9.5
-        )
-        plt.gca().add_patch(rect)
-
-        text_x, text_y = center['x'] + plate_length, center['y']
-        ha, va = 'left', 'center'
-
-    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
-
-
-def draw_inductor(center, name, orientation):
-    num_loops = 3
-    loop_radius = SCALE / 40
-    loop_spacing = loop_radius * 2
-    total_length = loop_spacing * num_loops
-    height = SCALE / 20
-
-    if orientation == 'horizontal':
-        start_x = center['x'] - total_length / 2
-        y_center = center['y']
-
-        rect = plt.Rectangle(
-            (start_x, y_center - loop_radius),
-            total_length, loop_radius * 2,
-            facecolor='white',
-            edgecolor='none',
-            zorder=9.5
-        )
-        plt.gca().add_patch(rect)
-
-        for i in range(num_loops):
-            theta = np.linspace(0, np.pi, 100)
-            x = start_x + i * loop_spacing + loop_radius * (1 - np.cos(theta))
-            y = y_center + loop_radius * np.sin(theta)
-            plt.plot(x, y, color='black', linewidth=1.0, zorder=10)
-
-        text_x, text_y = center['x'], center['y'] - loop_radius * 1.8
-        ha, va = 'center', 'top'
-
-    elif orientation == 'vertical':
-        start_y = center['y'] - total_length / 2
-        x_center = center['x']
-
-        rect = plt.Rectangle(
-            (x_center - loop_radius, start_y),
-            loop_radius * 2, total_length,
-            facecolor='white',
-            edgecolor='none',
-            zorder=9.5
-        )
-        plt.gca().add_patch(rect)
-
-        for i in range(num_loops):
-            theta = np.linspace(0, np.pi, 100)
-            y = start_y + i * loop_spacing + loop_radius * (1 - np.cos(theta))
-            x = x_center + loop_radius * np.sin(theta)
-            plt.plot(x, y, color='black', linewidth=1.0, zorder=10)
-
-        text_x, text_y = center['x'] + loop_radius * 1.8, center['y']
         ha, va = 'left', 'center'
 
     plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
