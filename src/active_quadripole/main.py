@@ -1,11 +1,21 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+import os
 
 from src.common.draw_functions import draw_resistor, draw_capacitor, draw_inductor
 
+from docx import Document
+from docx.shared import Inches
+from PIL import Image
+
 from conf.config import SCALE
 
+
+SCHEMES_FOLDER = 'schemes'
+MAX_IMAGE_WIDTH_INCHES = 3
+NUMBER_COL_WIDTH = Inches(0.8)
+OUTPUT_DOCX = 'generated_schemes.docx'
 
 def generate_active_quadripole_scheme_topology(scheme_type):
     all_nodes = {}
@@ -577,23 +587,112 @@ def visualise_active_quadripole_scheme(scheme_nodes, quadripole_nodes, scheme_la
                             inductor_idx += 1
 
     plt.axis('off')
-    plt.show()
+
+
+def add_schemes_to_word(resistors_num, inductors_num, capacitors_num):
+    doc = Document()
+
+    table = doc.add_table(rows=1, cols=3)
+    table.style = 'Table Grid'
+    table.allow_autofit = False
+
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = 'Номер варианта'
+    hdr_cells[1].text = 'Схема'
+    hdr_cells[2].text = 'Номиналы'
+    hdr_cells[0].width = NUMBER_COL_WIDTH
+    hdr_cells[1].width = MAX_IMAGE_WIDTH_INCHES
+    hdr_cells[2].width = Inches(2.5)
+
+    for i in range(1, 31):
+        row_cells = table.add_row().cells
+        row_cells[0].text = str(i)
+        row_cells[0].width = NUMBER_COL_WIDTH
+        row_cells[1].width = MAX_IMAGE_WIDTH_INCHES
+        row_cells[2].width = Inches(2.5)
+
+        image_path = os.path.join(SCHEMES_FOLDER, f'scheme_{i}.png')
+        if os.path.exists(image_path):
+            with Image.open(image_path) as img:
+                width_px, height_px = img.size
+                dpi = img.info.get('dpi', (300, 300))[0]
+                width_in = width_px / dpi
+                scale = min(1.0, MAX_IMAGE_WIDTH_INCHES / width_in)
+                display_width = Inches(width_in * scale)
+                row_cells[1].paragraphs[0].add_run().add_picture(image_path, width=display_width)
+        else:
+            row_cells[1].text = 'Изображение не найдено'
+
+        descriptions = []
+
+        for r in range(1, resistors_num + 1):
+            resistance = random.randint(5, 100)
+            descriptions.append(f"R{r}={resistance} Ом")
+
+        for r in range(1, capacitors_num + 1):
+            capacity = round(random.uniform(0.05, 1), 2)
+            descriptions.append(f"C{r}={capacity} мкФ")
+
+        for r in range(1, inductors_num + 1):
+            inductance = random.randint(1, 20)
+            descriptions.append(f"L{r}={inductance} мГн")
+
+        row_cells[2].text = '\n'.join(descriptions)
+
+    doc.save(OUTPUT_DOCX)
+    print(f'Файл сохранён: {OUTPUT_DOCX}')
 
 
 def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors_num, capacitors_num):
-    scheme_nodes, quadripole_nodes, scheme_layout = generate_active_quadripole_scheme_topology(
-        scheme_type=scheme_type
-    )
+    schemes = []
 
-    place_elements(
-        scheme_layout=scheme_layout,
+    for _ in range(1000):
+        scheme_nodes, quadripole_nodes, scheme_layout = generate_active_quadripole_scheme_topology(
+            scheme_type=scheme_type
+        )
+
+        place_elements(
+            scheme_layout=scheme_layout,
+            resistors_num=resistors_num,
+            inductors_num=inductors_num,
+            capacitors_num=capacitors_num
+        )
+
+        schemes.append({
+            "scheme_nodes": scheme_nodes,
+            "quadripole_nodes": quadripole_nodes,
+            "scheme_layout": scheme_layout
+        })
+
+    unique_schemes = []
+
+    for scheme in schemes:
+        if len(unique_schemes) == 30:
+            break
+        if scheme not in unique_schemes:
+            unique_schemes.append(scheme)
+
+    if len(unique_schemes) < 30:
+        print(f'[Warning] Удалось сгенерировать только {len(unique_schemes)} уникальных схем')
+        while len(unique_schemes) < 30:
+            random_scheme = random.choice(schemes)
+            unique_schemes.append(random_scheme)
+
+    random.shuffle(unique_schemes)
+
+    for idx, scheme in enumerate(unique_schemes, start=1):
+        visualise_active_quadripole_scheme(
+            scheme_nodes=scheme["scheme_nodes"],
+            quadripole_nodes=scheme["quadripole_nodes"],
+            scheme_layout=scheme["scheme_layout"]
+        )
+
+        fig = plt.gcf()
+        fig.savefig(f'{SCHEMES_FOLDER}/scheme_{idx}.png', dpi=300, bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+
+    add_schemes_to_word(
         resistors_num=resistors_num,
-        inductors_num=inductors_num,
-        capacitors_num=capacitors_num
-    )
-
-    visualise_active_quadripole_scheme(
-        scheme_nodes=scheme_nodes,
-        quadripole_nodes=quadripole_nodes,
-        scheme_layout=scheme_layout
+        capacitors_num=capacitors_num,
+        inductors_num=inductors_num
     )
