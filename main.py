@@ -4,6 +4,7 @@ from src.direct_current.main import generate_direct_current_schemes_set
 from src.alternating_current.main import generate_alternating_current_schemes_set
 from src.transient_processes.main import generate_transient_processes_schemes_set
 from src.active_quadripole.main import generate_active_quadripole_schemes_set
+from src.filter.main import generate_filter_schemes_set
 
 
 # generate_active_dipole_schemes_set(
@@ -50,9 +51,14 @@ from src.active_quadripole.main import generate_active_quadripole_schemes_set
 #     inductors_num=2
 # )
 
-generate_active_quadripole_schemes_set(
-    scheme_type="G",
-    resistors_num=1,
-    capacitors_num=1,
-    inductors_num=2
+# generate_active_quadripole_schemes_set(
+#     scheme_type="G",
+#     resistors_num=1,
+#     capacitors_num=1,
+#     inductors_num=2
+# )
+
+generate_filter_schemes_set(
+    scheme_type='G',
+    filter_type='LPF'
 )
