@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>ASCVECASP</title>
+  <script src="/eel.js"></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <h2>Выбор темы</h2>
+
+  <label for="lab-theme">Тема:</label>
+  <select id="lab-theme">
+    <option value="active_dipole">
+      Нахождение параметров схемы замещения активного двухполюсника
+    </option>
+    <option value="coupling_coefficient">
+      Нахождение коэффициентов связи
+    </option>
+    <option value="direct_current">
+      Нахождение токов и напряжений в схемах постоянного тока
+    </option>
+    <option value="alternating_current">
+      Нахождение токов и напряжений в схемах переменного тока
+    </option>
+    <option value="transient_processes">
+      Нахождение формы тока или напряжения при переходном процессе
+    </option>
+    <option value="active_quadripole">
+      Нахождение параметров четырёхполюсника
+    </option>
+    <option value="filter">
+      Расчёт параметров пассивных электрических фильтров
+    </option>
+  </select>
+
+  <h3>Элементы схемы</h3>
+
+  <div class="element" id="nodes-num-wrapper">
+    <label>Узлы: <input type="number" id="nodes-num" min="0" value="0"></label>
+  </div>
+
+  <div class="element" id="branches-num-wrapper">
+    <label>Ветви: <input type="number" id="branches-num" min="0" value="0"></label>
+  </div>
+
+  <div class="element" id="voltage-sources-num-wrapper">
+    <label>Источники напряжения: <input type="number" id="voltage-sources-num" min="0" value="0"></label>
+  </div>
+
+  <div class="element" id="current-sources-num-wrapper">
+    <label>Источники тока: <input type="number" id="current-sources-num" min="0" value="0"></label>
+  </div>
+
+  <div class="element" id="resistors-num-wrapper">
+    <label>Резисторы: <input type="number" id="resistors-num" min="0" value="0"></label>
+  </div>
+
+  <div class="element" id="capacitors-num-wrapper">
+    <label>Конденсаторы: <input type="number" id="capacitors-num" min="0" value="0"></label>
+  </div>
+
+  <div class="element" id="inductors-num-wrapper">
+    <label>Индуктивности: <input type="number" id="inductors-num" min="0" value="0"></label>
+  </div>
+
+  <div class="element" id="filter-type-wrapper">
+    <label for="filter-type">Тип фильтра:
+      <select id="filter-type">
+        <option value="LPF">Низких частот</option>
+        <option value="HPF">Высоких частот</option>
+        <option value="BPF">Полосовой</option>
+        <option value="BSF">Режекторный</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="element" id="circuit-type-wrapper">
+    <label for="scheme-type">Тип схемы:
+      <select id="scheme-type">
+        <option value="G">Г-образная</option>
+        <option value="P">П-образная</option>
+        <option value="T">Т-образная</option>
+        <option value="T_bridge">Т-образная мостовая</option>
+        <option value="T_back_coupling">Т-образная с обратной связью</option>
+      </select>
+    </label>
+  </div>
+
+  <button onclick="submitData()">Создать</button>
+
+  <p id="result"></p>
+</body>
+</html>

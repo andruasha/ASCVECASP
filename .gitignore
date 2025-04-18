@@ -3,3 +3,6 @@
 schemes
 for_test.py
 generated_schemes.docx
+dist
+build
+main.spec
