@@ -1,9 +1,7 @@
 import random
-import matplotlib.pyplot as plt
-
-from PIL import Image, PngImagePlugin
 import io
-
+import matplotlib.pyplot as plt
+from PIL import Image, PngImagePlugin
 from conf.config import SCALE
 from src.common.compare_functions import compare_topologies, compare_layouts
 from src.common.electric_circuit import ElectricCircuit

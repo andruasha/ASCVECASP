@@ -1,9 +1,15 @@
-from PySide6.QtWidgets import (
-    QApplication, QWidget, QLabel, QComboBox, QSpinBox,
-    QPushButton, QFileDialog, QVBoxLayout, QFormLayout, QHBoxLayout, QMessageBox
-)
 import sys
-
+from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QLabel
+from PySide6.QtWidgets import QComboBox
+from PySide6.QtWidgets import QSpinBox
+from PySide6.QtWidgets import QPushButton
+from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QVBoxLayout
+from PySide6.QtWidgets import QFormLayout
+from PySide6.QtWidgets import QHBoxLayout
+from PySide6.QtWidgets import QMessageBox
 from src.active_dipole.main import generate_active_dipole_schemes_set
 from src.coupling_coefficient.main import generate_coupling_coefficient_schemes_set
 from src.direct_current.main import generate_direct_current_schemes_set

@@ -1,8 +1,7 @@
-from conf.config import SCALE
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Polygon
+from conf.config import SCALE
 
 
 def draw_resistor(center, name, orientation):

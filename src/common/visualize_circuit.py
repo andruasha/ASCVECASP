@@ -1,7 +1,4 @@
-from conf.config import SCALE
-
 import matplotlib.pyplot as plt
-
 from src.common.draw_functions import draw_voltage_source
 from src.common.draw_functions import draw_current_source
 from src.common.draw_functions import draw_resistor

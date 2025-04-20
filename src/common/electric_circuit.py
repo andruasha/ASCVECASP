@@ -1,10 +1,9 @@
+import copy
+import secrets
+import matplotlib.pyplot as plt
+from itertools import combinations
 from conf.config import SCALE
 from conf.config import SCALE_RATIO
-
-import matplotlib.pyplot as plt
-import secrets
-import copy
-from itertools import combinations
 
 
 def get_random_elements(elements_array, elements_num):
