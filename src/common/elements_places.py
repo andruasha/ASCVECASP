@@ -4,11 +4,23 @@ import copy
 
 class ElementsPlacer:
 
-    def __init__(self, circuit_topology, voltage_sources_num, current_sources_num, resistors_num):
+    def __init__(
+            self,
+            circuit_topology,
+            voltage_sources_num,
+            current_sources_num,
+            resistors_num,
+            inductors_num,
+            capacitors_num,
+            scheme_type
+    ):
         self.layout = {}
         self.voltage_sources_num = voltage_sources_num
         self.current_sources_num = current_sources_num
         self.resistors_num = resistors_num
+        self.inductors_num = inductors_num
+        self.capacitors_num = capacitors_num
+        self.scheme_type = scheme_type
 
         for connection_name, connection_coords in circuit_topology.nodes_connections.items():
             self.layout[connection_name] = []
@@ -42,11 +54,40 @@ class ElementsPlacer:
                             for element_type in connection[0]['elements']:
                                 if element_type['type'] == 'resistor':
                                     resistor_exists = True
-                                if element_type['type'] == 'active_dipole':
-                                    return False
+                                if self.scheme_type == "active_dipole":
+                                    if element_type['type'] == 'active_dipole':
+                                        return False
 
                     if not resistor_exists:
                         return False
+                if self.scheme_type == "transient_processes":
+                    for connection in connections:
+                        elements = connection[0]['elements']
+                        types_in_connection = {el['type'] for el in elements}
+                        if 'voltage_source' in types_in_connection and 'capacitor' in types_in_connection:
+                            capacitor_indices = [i for i, el in enumerate(elements) if el['type'] == 'capacitor']
+                            for idx in capacitor_indices:
+                                has_resistor = False
+                                if idx > 0 and elements[idx - 1]['type'] == 'resistor':
+                                    has_resistor = True
+                                elif idx < len(elements) - 1 and elements[idx + 1]['type'] == 'resistor':
+                                    has_resistor = True
+                                if not has_resistor:
+                                    return False
+
+                        for i in range(len(elements) - 1):
+                            if elements[i]['type'] == 'current_source' and elements[i + 1]['type'] == 'inductor':
+                                if i + 2 < len(elements) and elements[i + 2]['type'] == 'resistor':
+                                    continue
+                                elif i > 0 and elements[i - 1]['type'] == 'resistor':
+                                    continue
+                                else:
+                                    return False
+                            elif elements[i]['type'] == 'inductor' and elements[i + 1]['type'] == 'current_source':
+                                if i > 0 and elements[i - 1]['type'] == 'resistor':
+                                    continue
+                                else:
+                                    return False
 
             return True
 
@@ -72,6 +113,8 @@ class ElementsPlacer:
         vs_num = copy.deepcopy(self.voltage_sources_num)
         cs_num = copy.deepcopy(self.current_sources_num)
         r_num = copy.deepcopy(self.resistors_num)
+        i_num = copy.deepcopy(self.inductors_num)
+        c_num = copy.deepcopy(self.capacitors_num)
 
         all_connections = []
 
@@ -112,8 +155,11 @@ class ElementsPlacer:
                 vs_num -= 1
 
         remaining_elements = (
-            ['resistor'] * r_num +
-            ['active_dipole'] * 1
+                ['resistor'] * r_num +
+                ['inductor'] * i_num +
+                ['capacitor'] * c_num +
+                (['active_dipole'] if self.scheme_type == 'active_dipole' else []) +
+                ([random.choice(['opening_switch', 'closing_switch'])] if self.scheme_type == 'transient_processes' else [])
         )
         random.shuffle(remaining_elements)
 
