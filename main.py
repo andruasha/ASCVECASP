@@ -23,6 +23,8 @@ element_mappings = {
     "filter": ["filter_type", "scheme_type"]
 }
 
+active_quadripole_schemes = ["G", "P", "T", "T_bridge", "T_back_coupling"]
+
 filter_to_schemes = {
     "LPF": ["G", "P", "T"],
     "HPF": ["G", "P", "T"],
@@ -115,6 +117,9 @@ class SchemeGenerator(QWidget):
 
         if "scheme_type" in visible and "filter_type" in visible:
             self.update_scheme_options()
+        elif theme == "active_quadripole" and "scheme_type" in visible:
+            self.scheme_type_combo.clear()
+            self.scheme_type_combo.addItems(active_quadripole_schemes)
 
     def update_scheme_options(self):
         filter_type = self.filter_type_combo.currentText()
@@ -129,6 +134,7 @@ class SchemeGenerator(QWidget):
             self.folder_label.setText(folder)
 
     def submit_data(self):
+        status = {}
         theme = self.theme_combo.currentText()
 
         def get_value(key):
@@ -143,7 +149,7 @@ class SchemeGenerator(QWidget):
         print(self.selected_folder)
 
         if theme == "active_dipole":
-            generate_active_dipole_schemes_set(
+            status = generate_active_dipole_schemes_set(
                 nodes_num=get_value("nodes"),
                 branches_num=get_value("branches"),
                 voltage_sources_num=get_value("voltage_sources"),
@@ -152,7 +158,7 @@ class SchemeGenerator(QWidget):
             )
 
         elif theme == "coupling_coefficient":
-            generate_coupling_coefficient_schemes_set(
+            status = generate_coupling_coefficient_schemes_set(
                 nodes_num=get_value("nodes"),
                 branches_num=get_value("branches"),
                 voltage_sources_num=get_value("voltage_sources"),
@@ -161,7 +167,7 @@ class SchemeGenerator(QWidget):
             )
 
         elif theme == "direct_current":
-            generate_direct_current_schemes_set(
+            status = generate_direct_current_schemes_set(
                 nodes_num=get_value("nodes"),
                 branches_num=get_value("branches"),
                 voltage_sources_num=get_value("voltage_sources"),
@@ -170,7 +176,7 @@ class SchemeGenerator(QWidget):
             )
 
         elif theme == "alternating_current":
-            generate_alternating_current_schemes_set(
+            status = generate_alternating_current_schemes_set(
                 nodes_num=get_value("nodes"),
                 branches_num=get_value("branches"),
                 voltage_sources_num=get_value("voltage_sources"),
@@ -181,7 +187,7 @@ class SchemeGenerator(QWidget):
             )
 
         elif theme == "transient_processes":
-            generate_transient_processes_schemes_set(
+            status = generate_transient_processes_schemes_set(
                 nodes_num=get_value("nodes"),
                 branches_num=get_value("branches"),
                 voltage_sources_num=get_value("voltage_sources"),
@@ -192,7 +198,7 @@ class SchemeGenerator(QWidget):
             )
 
         elif theme == "active_quadripole":
-            generate_active_quadripole_schemes_set(
+            status = generate_active_quadripole_schemes_set(
                 scheme_type=get_value("scheme_type"),
                 resistors_num=get_value("resistors"),
                 capacitors_num=get_value("capacitors"),
@@ -200,12 +206,17 @@ class SchemeGenerator(QWidget):
             )
 
         elif theme == "filter":
-            generate_filter_schemes_set(
+            status = generate_filter_schemes_set(
                 scheme_type=get_value("scheme_type"),
                 filter_type=get_value("filter_type")
             )
 
-        QMessageBox.information(self, "Готово", "Схемы успешно сгенерированы (заглушка).")
+        if status['code'] == "success":
+            QMessageBox.information(self, "Success", status['message'])
+        elif status['code'] == "warning":
+            QMessageBox.warning(self, "Warning", status['message'])
+        elif status['code'] == "error":
+            QMessageBox.critical(self, "Error", status['message'])
 
 
 if __name__ == "__main__":

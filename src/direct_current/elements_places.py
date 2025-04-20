@@ -62,7 +62,7 @@ class ElementsPlacer:
                 regeneration_count += 1
 
                 if regeneration_count >= max_regenerations:
-                    raise Exception("Невозможно сгенерировать набор валидных схем при данных параметрах")
+                    return {"code": "error", "message": "Невозможно сгенерировать валидные схемы при заданных параметрах"}
 
         return self
 

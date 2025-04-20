@@ -912,6 +912,7 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "scheme_layout": scheme_layout
                 })
 
+    status = {"code": "success", "message": "Набор схем успешно сгенерирован"}
     unique_schemes = []
 
     for scheme in schemes:
@@ -921,6 +922,7 @@ def generate_filter_schemes_set(scheme_type, filter_type):
             unique_schemes.append(scheme)
 
     if len(unique_schemes) < 30:
+        status = {"code": "warning", "message": f'Удалось сгенерировать только {len(unique_schemes)} уникальных схем'}
         print(f'[Warning] Удалось сгенерировать только {len(unique_schemes)} уникальных схем')
         while len(unique_schemes) < 30:
             random_scheme = random.choice(schemes)
@@ -969,3 +971,5 @@ def generate_filter_schemes_set(scheme_type, filter_type):
     add_schemes_to_word(
         scheme_type="filter"
     )
+
+    return status

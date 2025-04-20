@@ -148,9 +148,6 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         if is_unique:
             unique_schemes.append((topology_1, circuit_1))
 
-    if len(unique_schemes) < 30:
-        print(f'[Warning] Удалось сгенерировать только {len(unique_schemes)} уникальных схем')
-
     index = 1
     for topology, circuit in circuits_topologies_paired:
         visualizer = CircuitVisualize(circuit, topology)
@@ -173,9 +170,14 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
 
         index += 1
 
+    if len(unique_schemes) < 30:
+        return {"code": "warning", "message": f'Удалось сгенерировать только {len(unique_schemes)} уникальных схем'}
+
+    return {"code": "success", "message": "Набор схем успешно сгенерирован"}
+
 
 def generate_direct_current_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num):
-    generate_schemes_set(
+    status = generate_schemes_set(
         nodes_num=nodes_num,
         branches_num=branches_num,
         voltage_sources_num=voltage_sources_num,
@@ -183,6 +185,11 @@ def generate_direct_current_schemes_set(nodes_num, branches_num, voltage_sources
         resistors_num=resistors_num
     )
 
+    if status['code'] == "error":
+        return status
+
     add_schemes_to_word(
         scheme_type="direct_current"
     )
+
+    return status

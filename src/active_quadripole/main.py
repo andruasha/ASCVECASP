@@ -587,6 +587,7 @@ def visualise_active_quadripole_scheme(scheme_nodes, quadripole_nodes, scheme_la
 
 
 def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors_num, capacitors_num):
+    status = {"code": "success", "message": "Набор схем успешно сгенерирован"}
     schemes = []
 
     for _ in range(1000):
@@ -616,6 +617,7 @@ def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors
             unique_schemes.append(scheme)
 
     if len(unique_schemes) < 30:
+        status = {"code": "warning", "message": f'Удалось сгенерировать только {len(unique_schemes)} уникальных схем'}
         print(f'[Warning] Удалось сгенерировать только {len(unique_schemes)} уникальных схем')
         while len(unique_schemes) < 30:
             random_scheme = random.choice(schemes)
@@ -650,3 +652,5 @@ def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors
     add_schemes_to_word(
         scheme_type="active_quadripole"
     )
+
+    return status
