@@ -1,20 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import random
-import os
 
 from src.common.draw_functions import draw_resistor, draw_capacitor, draw_inductor
+from src.common.word_functions import add_schemes_to_word
 
-from docx import Document
-from docx.shared import Inches
-from PIL import Image
+from PIL import Image, PngImagePlugin
+import io
 
 from conf.config import SCALE
 
 SCHEMES_FOLDER = 'schemes'
-MAX_IMAGE_WIDTH_INCHES = 3
-NUMBER_COL_WIDTH = Inches(0.8)
-OUTPUT_DOCX = 'generated_schemes.docx'
 
 
 def generate_filter_scheme_topology(scheme_type):
@@ -419,8 +415,8 @@ def generate_filter_scheme_topology(scheme_type):
                 {
                     'connection_coords': [
                         all_nodes['node2'],
-                        {'x': all_nodes['node2']['x'], 'y': all_nodes['node4']},
-                        all_nodes['node4']
+                        {'x': all_nodes['node2']['x'], 'y': all_nodes['node4']['y']},
+                        all_nodes['node4'],
                     ],
                     'elements': []
                 }
@@ -429,8 +425,8 @@ def generate_filter_scheme_topology(scheme_type):
                 {
                     'connection_coords': [
                         all_nodes['node4'],
-                        {'x': all_nodes['node5']['x'], 'y': all_nodes['node4']},
-                        all_nodes['node4']
+                        {'x': all_nodes['node5']['x'], 'y': all_nodes['node4']['y']},
+                        all_nodes['node5']
                     ],
                     'elements': []
                 }
@@ -458,6 +454,24 @@ def generate_filter_scheme_topology(scheme_type):
                         all_nodes['node10']
                     ]
                 }
+            ],
+            'node3->node8': [
+                {
+                    'connection_coords': [
+                        all_nodes['node3'],
+                        all_nodes['node8']
+                    ],
+                    'elements': []
+                }
+            ],
+            'node4->node9': [
+                {
+                    'connection_coords': [
+                        all_nodes['node4'],
+                        all_nodes['node9']
+                    ],
+                    'elements': []
+                }
             ]
         }
 
@@ -482,12 +496,14 @@ def visualise_filter_scheme(scheme_nodes, quadripole_nodes, scheme_layout):
     capacitor_idx = 1
     inductor_idx = 1
 
-    for connections in scheme_layout.values():
+    for c_name, connections in scheme_layout.items():
         for segment in connections:
             coords = segment['connection_coords']
             for i in range(len(coords) - 1):
                 start = coords[i]
                 end = coords[i + 1]
+                print(c_name)
+                print([start['x'], end['x']], [start['y'], end['y']])
                 plt.plot([start['x'], end['x']], [start['y'], end['y']], 'k-', linewidth=1)
 
             if 'elements' not in segment:
@@ -581,68 +597,8 @@ def visualise_filter_scheme(scheme_nodes, quadripole_nodes, scheme_layout):
     plt.axis('off')
 
 
-def add_schemes_to_word(resistors_num, inductors_num, capacitors_num):
-    doc = Document()
-
-    table = doc.add_table(rows=1, cols=3)
-    table.style = 'Table Grid'
-    table.allow_autofit = False
-
-    hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = 'Номер варианта'
-    hdr_cells[1].text = 'Схема'
-    hdr_cells[2].text = 'Номиналы'
-    hdr_cells[0].width = NUMBER_COL_WIDTH
-    hdr_cells[1].width = MAX_IMAGE_WIDTH_INCHES
-    hdr_cells[2].width = Inches(2.5)
-
-    for i in range(1, 31):
-        row_cells = table.add_row().cells
-        row_cells[0].text = str(i)
-        row_cells[0].width = NUMBER_COL_WIDTH
-        row_cells[1].width = MAX_IMAGE_WIDTH_INCHES
-        row_cells[2].width = Inches(2.5)
-
-        image_path = os.path.join(SCHEMES_FOLDER, f'scheme_{i}.png')
-        if os.path.exists(image_path):
-            with Image.open(image_path) as img:
-                width_px, height_px = img.size
-                dpi = img.info.get('dpi', (300, 300))[0]
-                width_in = width_px / dpi
-                scale = min(1.0, MAX_IMAGE_WIDTH_INCHES / width_in)
-                display_width = Inches(width_in * scale)
-                row_cells[1].paragraphs[0].add_run().add_picture(image_path, width=display_width)
-        else:
-            row_cells[1].text = 'Изображение не найдено'
-
-        descriptions = []
-
-        if resistors_num > 0:
-            for r in range(1, resistors_num + 1):
-                resistance = random.randint(5, 100)
-                descriptions.append(f"R{r}={resistance} Ом")
-
-        if capacitors_num > 0:
-            for r in range(1, capacitors_num + 1):
-                capacity = round(random.uniform(0.05, 1), 2)
-                descriptions.append(f"C{r}={capacity} мкФ")
-
-        if inductors_num > 0:
-            for r in range(1, inductors_num + 1):
-                inductance = random.randint(1, 20)
-                descriptions.append(f"L{r}={inductance} мГн")
-
-        row_cells[2].text = '\n'.join(descriptions)
-
-    doc.save(OUTPUT_DOCX)
-    print(f'Файл сохранён: {OUTPUT_DOCX}')
-
-
 def generate_filter_schemes_set(scheme_type, filter_type):
     schemes = []
-    resistors_num = 0
-    capacitors_num = 0
-    inductors_num = 0
 
     if filter_type == 'LPF':
         if scheme_type == 'G':
@@ -657,8 +613,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 1
-                capacitors_num = 1
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -671,8 +625,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-            resistors_num = 1
-            inductors_num = 1
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -685,8 +637,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                capacitors_num = 1
-                inductors_num = 1
 
         if scheme_type == 'P':
             for _ in range(11):
@@ -701,8 +651,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 1
-                capacitors_num = 2
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -716,8 +664,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 2
-                inductors_num = 1
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -731,8 +677,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                capacitors_num = 2
-                inductors_num = 1
 
         if scheme_type == 'T':
             for _ in range(11):
@@ -747,8 +691,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 2
-                capacitors_num = 1
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -762,8 +704,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 1
-                inductors_num = 2
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -777,8 +717,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                capacitors_num = 1
-                inductors_num = 2
 
     if filter_type == 'HPF':
         if scheme_type == 'G':
@@ -793,8 +731,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 1
-                capacitors_num = 1
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -807,8 +743,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 1
-                inductors_num = 1
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -821,8 +755,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                capacitors_num = 1
-                inductors_num = 1
 
         if scheme_type == 'P':
             for _ in range(11):
@@ -837,8 +769,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 2
-                capacitors_num = 1
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -852,8 +782,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 1
-                inductors_num = 2
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -867,8 +795,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                capacitors_num = 1
-                inductors_num = 2
 
         if scheme_type == 'T':
             for _ in range(11):
@@ -883,8 +809,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 1
-                capacitors_num = 2
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -898,8 +822,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 2
-                inductors_num = 1
 
             for _ in range(11):
                 scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
@@ -913,8 +835,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                capacitors_num = 2
-                inductors_num = 1
 
     if filter_type == 'BPF':
         if scheme_type == 'G':
@@ -930,9 +850,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 1
-                capacitors_num = 1
-                inductors_num = 1
 
         if scheme_type == 'P':
             for _ in range(31):
@@ -948,8 +865,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 2
-                capacitors_num = 2
 
         if scheme_type == 'T':
             for _ in range(31):
@@ -964,8 +879,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 1
-                inductors_num = 2
 
     if filter_type == 'BSF':
         if scheme_type == 'G':
@@ -981,9 +894,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 1
-                capacitors_num = 1
-                inductors_num = 1
 
         if scheme_type == 'T_back_coupling':
             for _ in range(31):
@@ -1001,8 +911,6 @@ def generate_filter_schemes_set(scheme_type, filter_type):
                     "quadripole_nodes": quadripole_nodes,
                     "scheme_layout": scheme_layout
                 })
-                resistors_num = 3
-                capacitors_num = 3
 
     unique_schemes = []
 
@@ -1021,18 +929,43 @@ def generate_filter_schemes_set(scheme_type, filter_type):
     random.shuffle(unique_schemes)
 
     for idx, scheme in enumerate(unique_schemes, start=1):
+        resistors_num = 0
+        capacitors_num = 0
+        inductors_num = 0
+
+        for branch in scheme["scheme_layout"].values():
+            if 'elements' in branch[0]:
+                for element in branch[0]['elements']:
+                    if element == 'resistor':
+                        resistors_num += 1
+                    elif element == 'capacitor':
+                        capacitors_num += 1
+                    elif element == 'inductor':
+                        inductors_num += 1
+
         visualise_filter_scheme(
             scheme_nodes=scheme["scheme_nodes"],
             quadripole_nodes=scheme["quadripole_nodes"],
             scheme_layout=scheme["scheme_layout"]
         )
 
+        buf = io.BytesIO()
         fig = plt.gcf()
-        fig.savefig(f'{SCHEMES_FOLDER}/scheme_{idx}.png', dpi=300, bbox_inches='tight', pad_inches=0)
+        fig.savefig(buf, format='png', dpi=300, bbox_inches='tight', pad_inches=0)
         plt.close(fig)
 
+        buf.seek(0)
+        img = Image.open(buf)
+
+        meta = PngImagePlugin.PngInfo()
+        meta.add_text("voltage_sources_num", str(0))
+        meta.add_text("current_sources_num", str(0))
+        meta.add_text("resistors_num", str(resistors_num))
+        meta.add_text("capacitors_num", str(capacitors_num))
+        meta.add_text("inductors_num", str(inductors_num))
+
+        img.save(f'{SCHEMES_FOLDER}/scheme_{idx}.png', pnginfo=meta)
+
     add_schemes_to_word(
-        resistors_num=resistors_num,
-        capacitors_num=capacitors_num,
-        inductors_num=inductors_num
+        scheme_type="filter"
     )

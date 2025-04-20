@@ -1,23 +1,18 @@
 import random
 import matplotlib.pyplot as plt
-import os
-import itertools
 
-from docx import Document
-from docx.shared import Inches
-from PIL import Image
+from PIL import Image, PngImagePlugin
+import io
 
 from src.common.electric_circuit import ElectricCircuit
 from src.direct_current.elements_places import ElementsPlacer
 from src.direct_current.visualize_circuit import CircuitVisualize
+from src.common.word_functions import add_schemes_to_word
 
 from conf.config import SCALE
 
 
-MAX_IMAGE_WIDTH_INCHES = 3
-NUMBER_COL_WIDTH = Inches(0.8)
 SCHEMES_FOLDER = 'schemes'
-OUTPUT_DOCX = 'generated_schemes.docx'
 
 
 def compare_topologies(circuit_topology_1, circuit_topology_2):
@@ -161,68 +156,22 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         visualizer = CircuitVisualize(circuit, topology)
         visualizer.visualize()
 
+        buf = io.BytesIO()
         fig = plt.gcf()
-        fig.savefig(f'{SCHEMES_FOLDER}/scheme_{index}.png', dpi=300, bbox_inches='tight', pad_inches=0)
+        fig.savefig(buf, format='png', dpi=300, bbox_inches='tight', pad_inches=0)
         plt.close(fig)
 
-        # ltspice_path = os.path.join(SCHEMES_FOLDER, f'scheme_{index}.cir')
-        # visualizer.export_to_ltspice(filename=ltspice_path)
+        buf.seek(0)
+        img = Image.open(buf)
+
+        meta = PngImagePlugin.PngInfo()
+        meta.add_text("voltage_sources_num", str(voltage_sources_num))
+        meta.add_text("current_sources_num", str(current_sources_num))
+        meta.add_text("resistors_num", str(resistors_num))
+
+        img.save(f'{SCHEMES_FOLDER}/scheme_{index}.png', pnginfo=meta)
 
         index += 1
-
-
-def add_schemes_to_word(voltage_sources_num, current_sources_num, resistors_num):
-    doc = Document()
-
-    table = doc.add_table(rows=1, cols=3)
-    table.style = 'Table Grid'
-    table.allow_autofit = False
-
-    hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = 'Номер варианта'
-    hdr_cells[1].text = 'Схема'
-    hdr_cells[2].text = 'Номиналы'
-    hdr_cells[0].width = NUMBER_COL_WIDTH
-    hdr_cells[1].width = MAX_IMAGE_WIDTH_INCHES
-    hdr_cells[2].width = Inches(2.5)
-
-    for i in range(1, 31):
-        row_cells = table.add_row().cells
-        row_cells[0].text = str(i)
-        row_cells[0].width = NUMBER_COL_WIDTH
-        row_cells[1].width = MAX_IMAGE_WIDTH_INCHES
-        row_cells[2].width = Inches(2.5)
-
-        image_path = os.path.join(SCHEMES_FOLDER, f'scheme_{i}.png')
-        if os.path.exists(image_path):
-            with Image.open(image_path) as img:
-                width_px, height_px = img.size
-                dpi = img.info.get('dpi', (300, 300))[0]
-                width_in = width_px / dpi
-                scale = min(1.0, MAX_IMAGE_WIDTH_INCHES / width_in)
-                display_width = Inches(width_in * scale)
-                row_cells[1].paragraphs[0].add_run().add_picture(image_path, width=display_width)
-        else:
-            row_cells[1].text = 'Изображение не найдено'
-
-        descriptions = []
-
-        for v in range(1, voltage_sources_num + 1):
-            voltage = random.randint(15, 310)
-            descriptions.append(f"V{v}={voltage} В")
-
-        for r in range(1, resistors_num + 1):
-            resistance = random.randint(5, 100)
-            descriptions.append(f"R{r}={resistance} Ом")
-
-        for c in range(1, current_sources_num + 1):
-            current = random.randint(0.15, 3)
-            descriptions.append(f"I{c}={current} А")
-
-        row_cells[2].text = '\n'.join(descriptions)
-
-    doc.save(OUTPUT_DOCX)
-    print(f'Файл сохранён: {OUTPUT_DOCX}')
 
 
 def generate_direct_current_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num):
@@ -235,7 +184,5 @@ def generate_direct_current_schemes_set(nodes_num, branches_num, voltage_sources
     )
 
     add_schemes_to_word(
-        voltage_sources_num=voltage_sources_num,
-        current_sources_num=current_sources_num,
-        resistors_num=resistors_num
+        scheme_type="direct_current"
     )
