@@ -19,6 +19,69 @@ from src.active_quadripole.main import generate_active_quadripole_schemes_set
 from src.filter.main import generate_filter_schemes_set
 
 
+def at_least_one_reactive(widgets):
+    cond = widgets["capacitors"].value() + widgets["inductors"].value() > 0
+    return cond, "Добавьте хотя бы один конденсатор или индуктивность"
+
+
+def current_sources_no_more_than_nodes_minus_one(widgets):
+    cond = widgets["current_sources"].value() <= widgets["nodes"].value() - 1
+    return cond, "Число источников тока не должно превышать (узлы - 1)"
+
+
+def total_elements_at_least_branches(widgets):
+    try:
+        branches = int(widgets["branches"].currentText())
+    except Exception:
+        return True, ""  # Если поле ещё не заполнено — пропускаем
+
+    total = sum([
+        widgets.get(key).value() for key in [
+            "voltage_sources", "current_sources", "resistors", "capacitors", "inductors"
+        ] if key in widgets
+    ])
+    cond = total >= branches
+    return cond, f"Сумма всех элементов должна быть не меньше числа ветвей ({branches})"
+
+
+def total_elements_not_exceed_branches_times_8(widgets):
+    try:
+        branches = int(widgets["branches"].currentText())
+    except Exception:
+        return True, ""  # Если поле ещё не заполнено — пропускаем
+
+    total = sum([
+        widgets.get(key).value() for key in [
+            "voltage_sources", "current_sources", "resistors", "capacitors", "inductors"
+        ] if key in widgets
+    ])
+    cond = total <= branches * 8
+    return cond, f"Сумма всех элементов не должна превышать {branches * 8}"
+
+
+validators = {
+    "active_dipole": [
+        total_elements_at_least_branches,
+        total_elements_not_exceed_branches_times_8
+    ],
+    "coupling_coefficient": [
+        total_elements_at_least_branches,
+        total_elements_not_exceed_branches_times_8
+    ],
+    "direct_current": [
+        total_elements_at_least_branches,
+        total_elements_not_exceed_branches_times_8
+    ],
+    "alternating_current": [
+        total_elements_at_least_branches,
+        total_elements_not_exceed_branches_times_8
+    ],
+    "transient_processes": [
+        total_elements_at_least_branches,
+        total_elements_not_exceed_branches_times_8
+    ]
+}
+
 element_mappings = {
     "active_dipole": ["nodes", "branches", "voltage_sources", "current_sources", "resistors"],
     "coupling_coefficient": ["nodes", "branches", "voltage_sources", "current_sources", "resistors"],
@@ -28,6 +91,18 @@ element_mappings = {
     "active_quadripole": ["scheme_type", "resistors", "capacitors", "inductors"],
     "filter": ["filter_type", "scheme_type"]
 }
+
+theme_display_mapping = {
+    "Нахождение параметров схемы замещения активного двухполюсника": "active_dipole",
+    "Нахождение коэффициентов связи": "coupling_coefficient",
+    "Нахождение токов и напряжений в схемах постоянного тока": "direct_current",
+    "Нахождение токов и напряжений в схемах переменного тока": "alternating_current",
+    "Нахождение формы тока или напряжения при переходном процессе": "transient_processes",
+    "Нахождение параметров четырёхполюсника": "active_quadripole",
+    "Расчёт параметров пассивных электрических фильтров": "filter"
+}
+
+theme_reverse_mapping = {v: k for k, v in theme_display_mapping.items()}
 
 active_quadripole_schemes = ["G", "P", "T", "T_bridge", "T_back_coupling"]
 
@@ -53,30 +128,36 @@ class SchemeGenerator(QWidget):
         self.theme_combo = None
         self.setWindowTitle("ASCVECASP")
         self.setMinimumSize(400, 600)
-
         self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout()
-
         self.form = QFormLayout()
         layout.addLayout(self.form)
-
         self.theme_combo = QComboBox()
-        self.theme_combo.addItems(element_mappings.keys())
+        self.theme_combo.addItems(theme_display_mapping.keys())
         self.theme_combo.currentTextChanged.connect(self.update_visible_elements)
         self.form.addRow("Тема:", self.theme_combo)
-
         self.widgets = {}
+
+        nodes_combo = QComboBox()
+        nodes_combo.addItems([str(i) for i in range(2, 5)])
+        nodes_combo.currentTextChanged.connect(self.validate_inputs)
+        nodes_combo.currentTextChanged.connect(self.update_branches_range)
+        self.form.addRow("Узлы:", nodes_combo)
+        self.widgets["nodes"] = nodes_combo
+
+        branches_combo = QComboBox()
+        self.form.addRow("Ветви:", branches_combo)
+        self.widgets["branches"] = branches_combo
 
         def add_spin(label, key):
             widget = QSpinBox()
             widget.setRange(0, 100)
+            widget.valueChanged.connect(self.validate_inputs)
             self.form.addRow(label, widget)
             self.widgets[key] = widget
 
-        add_spin("Узлы:", "nodes")
-        add_spin("Ветви:", "branches")
         add_spin("Источники напряжения:", "voltage_sources")
         add_spin("Источники тока:", "current_sources")
         add_spin("Резисторы:", "resistors")
@@ -86,10 +167,12 @@ class SchemeGenerator(QWidget):
         self.filter_type_combo = QComboBox()
         self.filter_type_combo.addItems(filter_to_schemes.keys())
         self.filter_type_combo.currentTextChanged.connect(self.update_scheme_options)
+        self.filter_type_combo.currentTextChanged.connect(self.validate_inputs)
         self.widgets["filter_type"] = self.filter_type_combo
         self.form.addRow("Тип фильтра:", self.filter_type_combo)
 
         self.scheme_type_combo = QComboBox()
+        self.scheme_type_combo.currentTextChanged.connect(self.validate_inputs)
         self.widgets["scheme_type"] = self.scheme_type_combo
         self.form.addRow("Тип схемы:", self.scheme_type_combo)
 
@@ -106,26 +189,38 @@ class SchemeGenerator(QWidget):
         layout.addWidget(self.submit_btn)
 
         self.setLayout(layout)
-
         self.selected_folder = ""
-
         self.update_visible_elements()
 
-    def update_visible_elements(self):
-        theme = self.theme_combo.currentText()
-        visible = set(element_mappings.get(theme, []))
+    def update_branches_range(self):
+        nodes = int(self.widgets["nodes"].currentText())
+        branches_combo = self.widgets["branches"]
+        branches_combo.clear()
+        if nodes == 2:
+            options = [3]
+        elif nodes == 3:
+            options = list(range(5, 10))
+        elif nodes == 4:
+            options = list(range(6, 13))
+        branches_combo.addItems([str(x) for x in options])
+        self.validate_inputs()
 
+    def update_visible_elements(self):
+        theme_display = self.theme_combo.currentText()
+        theme = theme_display_mapping[theme_display]
+        visible = set(element_mappings.get(theme, []))
         for key, widget in self.widgets.items():
             row = self.form.labelForField(widget)
             should_show = key in visible
             widget.setVisible(should_show)
             row.setVisible(should_show)
-
         if "scheme_type" in visible and "filter_type" in visible:
             self.update_scheme_options()
         elif theme == "active_quadripole" and "scheme_type" in visible:
             self.scheme_type_combo.clear()
             self.scheme_type_combo.addItems(active_quadripole_schemes)
+        self.update_branches_range()
+        self.validate_inputs()
 
     def update_scheme_options(self):
         filter_type = self.filter_type_combo.currentText()
@@ -138,10 +233,25 @@ class SchemeGenerator(QWidget):
         if folder:
             self.selected_folder = folder
             self.folder_label.setText(folder)
+            self.validate_inputs()
+
+    def validate_inputs(self):
+        theme_display = self.theme_combo.currentText()
+        theme = theme_display_mapping.get(theme_display)
+        validators_list = validators.get(theme, [])
+        for validator in validators_list:
+            is_valid, message = validator(self.widgets)
+            if not is_valid:
+                self.submit_btn.setEnabled(False)
+                self.submit_btn.setToolTip(message)
+                return
+        self.submit_btn.setEnabled(True)
+        self.submit_btn.setToolTip("")
 
     def submit_data(self):
         status = {}
-        theme = self.theme_combo.currentText()
+        theme_display = self.theme_combo.currentText()
+        theme = theme_display_mapping[theme_display]
 
         def get_value(key):
             if key in self.widgets:
@@ -151,8 +261,6 @@ class SchemeGenerator(QWidget):
                 elif isinstance(widget, QComboBox):
                     return widget.currentText()
             return None
-
-        print(self.selected_folder)
 
         if theme == "active_dipole":
             status = generate_active_dipole_schemes_set(
