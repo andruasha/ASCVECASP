@@ -597,7 +597,7 @@ def visualise_filter_scheme(scheme_nodes, quadripole_nodes, scheme_layout):
     plt.axis('off')
 
 
-def generate_filter_schemes_set(scheme_type, filter_type):
+def generate_filter_schemes_set(scheme_type, filter_type, save_path):
     schemes = []
 
     if filter_type == 'LPF':
@@ -966,10 +966,11 @@ def generate_filter_schemes_set(scheme_type, filter_type):
         meta.add_text("capacitors_num", str(capacitors_num))
         meta.add_text("inductors_num", str(inductors_num))
 
-        img.save(f'{SCHEMES_FOLDER}/scheme_{idx}.png', pnginfo=meta)
+        img.save(f'{save_path}/{SCHEMES_FOLDER}/scheme_{idx}.png', pnginfo=meta)
 
     add_schemes_to_word(
-        scheme_type="filter"
+        scheme_type="filter",
+        save_path=save_path
     )
 
     return status

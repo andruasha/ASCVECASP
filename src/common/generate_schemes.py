@@ -1,5 +1,6 @@
 import random
 import io
+import os
 import matplotlib.pyplot as plt
 from PIL import Image, PngImagePlugin
 from conf.config import SCALE
@@ -12,7 +13,7 @@ from src.common.visualize_circuit import CircuitVisualize
 SCHEMES_FOLDER = 'schemes'
 
 
-def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num, scheme_type):
+def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num, scheme_type, save_path):
     template_two_nodes_1 = {'node1': {'x': 0, 'y': 0},
                             'node2': {'x': SCALE, 'y': 0}}
 
@@ -107,6 +108,8 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         if is_unique:
             unique_schemes.append((topology_1, circuit_1))
 
+    os.makedirs(f'{save_path}/{SCHEMES_FOLDER}')
+
     index = 1
     for topology, circuit in circuits_topologies_paired:
         visualizer = CircuitVisualize(circuit, topology)
@@ -127,7 +130,7 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         meta.add_text("capacitors_num", str(capacitors_num))
         meta.add_text("inductors_num", str(inductors_num))
 
-        img.save(f'{SCHEMES_FOLDER}/scheme_{index}.png', pnginfo=meta)
+        img.save(f'{save_path}/{SCHEMES_FOLDER}/scheme_{index}.png', pnginfo=meta)
 
         index += 1
 

@@ -586,7 +586,7 @@ def visualise_active_quadripole_scheme(scheme_nodes, quadripole_nodes, scheme_la
     plt.axis('off')
 
 
-def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors_num, capacitors_num):
+def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors_num, capacitors_num, save_path):
     status = {"code": "success", "message": "Набор схем успешно сгенерирован"}
     schemes = []
 
@@ -647,10 +647,11 @@ def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors
         meta.add_text("capacitors_num", str(capacitors_num))
         meta.add_text("inductors_num", str(inductors_num))
 
-        img.save(f'{SCHEMES_FOLDER}/scheme_{idx}.png', pnginfo=meta)
+        img.save(f'{save_path}/{SCHEMES_FOLDER}/scheme_{idx}.png', pnginfo=meta)
 
     add_schemes_to_word(
-        scheme_type="active_quadripole"
+        scheme_type="active_quadripole",
+        save_path=save_path
     )
 
     return status

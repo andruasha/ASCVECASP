@@ -11,7 +11,7 @@ SCHEMES_FOLDER = 'schemes'
 OUTPUT_DOCX = 'generated_schemes.docx'
 
 
-def add_schemes_to_word(scheme_type):
+def add_schemes_to_word(scheme_type, save_path):
     doc = Document()
 
     table = doc.add_table(rows=1, cols=3)
@@ -33,7 +33,7 @@ def add_schemes_to_word(scheme_type):
         row_cells[1].width = MAX_IMAGE_WIDTH_INCHES
         row_cells[2].width = Inches(2.5)
 
-        image_path = os.path.join(SCHEMES_FOLDER, f'scheme_{i}.png')
+        image_path = os.path.join(save_path, SCHEMES_FOLDER, f'scheme_{i}.png')
         resistors_num = capacitors_num = inductors_num = 0
 
         if os.path.exists(image_path):
@@ -106,5 +106,5 @@ def add_schemes_to_word(scheme_type):
 
         row_cells[2].text = '\n'.join(descriptions)
 
-    doc.save(OUTPUT_DOCX)
+    doc.save(f'{save_path}/{OUTPUT_DOCX}')
     print(f'Файл сохранён: {OUTPUT_DOCX}')

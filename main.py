@@ -160,7 +160,8 @@ class SchemeGenerator(QWidget):
                 branches_num=get_value("branches"),
                 voltage_sources_num=get_value("voltage_sources"),
                 current_sources_num=get_value("current_sources"),
-                resistors_num=get_value("resistors")
+                resistors_num=get_value("resistors"),
+                save_path=self.selected_folder
             )
 
         elif theme == "coupling_coefficient":
@@ -169,7 +170,8 @@ class SchemeGenerator(QWidget):
                 branches_num=get_value("branches"),
                 voltage_sources_num=get_value("voltage_sources"),
                 current_sources_num=get_value("current_sources"),
-                resistors_num=get_value("resistors")
+                resistors_num=get_value("resistors"),
+                save_path=self.selected_folder
             )
 
         elif theme == "direct_current":
@@ -178,7 +180,8 @@ class SchemeGenerator(QWidget):
                 branches_num=get_value("branches"),
                 voltage_sources_num=get_value("voltage_sources"),
                 current_sources_num=get_value("current_sources"),
-                resistors_num=get_value("resistors")
+                resistors_num=get_value("resistors"),
+                save_path=self.selected_folder
             )
 
         elif theme == "alternating_current":
@@ -189,7 +192,8 @@ class SchemeGenerator(QWidget):
                 current_sources_num=get_value("current_sources"),
                 resistors_num=get_value("resistors"),
                 capacitors_num=get_value("capacitors"),
-                inductors_num=get_value("inductors")
+                inductors_num=get_value("inductors"),
+                save_path=self.selected_folder
             )
 
         elif theme == "transient_processes":
@@ -200,7 +204,8 @@ class SchemeGenerator(QWidget):
                 current_sources_num=get_value("current_sources"),
                 resistors_num=get_value("resistors"),
                 capacitors_num=get_value("capacitors"),
-                inductors_num=get_value("inductors")
+                inductors_num=get_value("inductors"),
+                save_path=self.selected_folder
             )
 
         elif theme == "active_quadripole":
@@ -208,13 +213,15 @@ class SchemeGenerator(QWidget):
                 scheme_type=get_value("scheme_type"),
                 resistors_num=get_value("resistors"),
                 capacitors_num=get_value("capacitors"),
-                inductors_num=get_value("inductors")
+                inductors_num=get_value("inductors"),
+                save_path=self.selected_folder
             )
 
         elif theme == "filter":
             status = generate_filter_schemes_set(
                 scheme_type=get_value("scheme_type"),
-                filter_type=get_value("filter_type")
+                filter_type=get_value("filter_type"),
+                save_path=self.selected_folder
             )
 
         if status['code'] == "success":
