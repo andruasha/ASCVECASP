@@ -51,6 +51,7 @@ def add_schemes_to_word(scheme_type, save_path):
                 resistors_num = int(metadata.get('resistors_num', 0))
                 capacitors_num = int(metadata.get('capacitors_num', 0))
                 inductors_num = int(metadata.get('inductors_num', 0))
+                switch_info = metadata.get('switch_info', "no")
         else:
             row_cells[1].text = 'Изображение не найдено'
 
@@ -103,6 +104,12 @@ def add_schemes_to_word(scheme_type, save_path):
             task = f"Рассчитать коэффициент связи между {source_label} и R{r_index}"
             descriptions.append("")
             descriptions.append(task)
+
+        if switch_info != "no":
+            if switch_info == "opening":
+                descriptions.append("Ключ открывается")
+            elif switch_info == "closing":
+                descriptions.append("Ключ закрывается")
 
         row_cells[2].text = '\n'.join(descriptions)
 

@@ -1,4 +1,6 @@
 import sys
+import os
+import subprocess
 from PySide6.QtWidgets import QApplication
 from PySide6.QtWidgets import QWidget
 from PySide6.QtWidgets import QLabel
@@ -17,6 +19,13 @@ from src.alternating_current.main import generate_alternating_current_schemes_se
 from src.transient_processes.main import generate_transient_processes_schemes_set
 from src.active_quadripole.main import generate_active_quadripole_schemes_set
 from src.filter.main import generate_filter_schemes_set
+
+
+def open_folder(path):
+    if sys.platform == "win32":
+        os.startfile(path)
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", path])
 
 
 def at_least_one_reactive(widgets):
@@ -62,23 +71,29 @@ def total_elements_not_exceed_branches_times_8(widgets):
 validators = {
     "active_dipole": [
         total_elements_at_least_branches,
-        total_elements_not_exceed_branches_times_8
+        total_elements_not_exceed_branches_times_8,
+        current_sources_no_more_than_nodes_minus_one
     ],
     "coupling_coefficient": [
         total_elements_at_least_branches,
-        total_elements_not_exceed_branches_times_8
+        total_elements_not_exceed_branches_times_8,
+        current_sources_no_more_than_nodes_minus_one
     ],
     "direct_current": [
         total_elements_at_least_branches,
-        total_elements_not_exceed_branches_times_8
+        total_elements_not_exceed_branches_times_8,
+        current_sources_no_more_than_nodes_minus_one
     ],
     "alternating_current": [
         total_elements_at_least_branches,
-        total_elements_not_exceed_branches_times_8
+        total_elements_not_exceed_branches_times_8,
+        current_sources_no_more_than_nodes_minus_one
     ],
     "transient_processes": [
         total_elements_at_least_branches,
-        total_elements_not_exceed_branches_times_8
+        total_elements_not_exceed_branches_times_8,
+        current_sources_no_more_than_nodes_minus_one,
+        at_least_one_reactive
     ]
 }
 
@@ -256,6 +271,10 @@ class SchemeGenerator(QWidget):
         self.submit_btn.setToolTip("")
 
     def submit_data(self):
+        self.setEnabled(False)
+        self.submit_btn.setText("Генерация...")
+        QApplication.processEvents()
+
         try:
             status = {}
             theme_display = self.theme_combo.currentText()
@@ -341,15 +360,26 @@ class SchemeGenerator(QWidget):
                     save_path=self.selected_folder
                 )
 
-            if status['code'] == "success":
-                QMessageBox.information(self, "Success", status['message'])
-            elif status['code'] == "warning":
-                QMessageBox.warning(self, "Warning", status['message'])
+            if status['code'] in ["success", "warning"]:
+                msg_box = QMessageBox(self)
+                msg_box.setIcon(QMessageBox.Information if status['code'] == "success" else QMessageBox.Warning)
+                msg_box.setWindowTitle("Успешно" if status['code'] == "success" else "Предупреждение")
+                msg_box.setText(status['message'])
+                open_btn = msg_box.addButton("Открыть папку", QMessageBox.ActionRole)
+                ok_btn = msg_box.addButton(QMessageBox.Ok)
+                msg_box.exec()
+                if msg_box.clickedButton() == open_btn:
+                    open_folder(self.selected_folder)
             elif status['code'] == "error":
-                QMessageBox.critical(self, "Error", status['message'])
+                QMessageBox.critical(self, "Ошибка", status['message'])
+
         except Exception as e:
-            QMessageBox.critical(self, "Error", f'Возникла непредвиденная ошибка: {str(e)}')
-            print(f'Возникла непредвиденная ошибка: {str(e)}')
+            QMessageBox.critical(self, "Ошибка", f'Возникла непредвиденная ошибка: {str(e)}')
+            print(f'Ошибка: {str(e)}')
+
+        finally:
+            self.setEnabled(True)
+            self.submit_btn.setText("Создать")
 
 
 if __name__ == "__main__":

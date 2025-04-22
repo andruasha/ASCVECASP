@@ -15,8 +15,6 @@ SCHEMES_FOLDER = 'schemes'
 
 def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num, scheme_type, save_path):
 
-    print(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num)
-
     template_two_nodes_1 = {'node1': {'x': 0, 'y': 0},
                             'node2': {'x': SCALE, 'y': 0}}
 
@@ -46,7 +44,7 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
     circuits_topologies = []
 
     if nodes_num == 2:
-        raw_topologies = [ElectricCircuit(branches_num=branches_num, nodes=template_two_nodes_1).create_nodes_connections() for _ in range(100)]
+        raw_topologies = [ElectricCircuit(branches_num=branches_num, nodes=template_two_nodes_1).create_nodes_connections() for _ in range(30)]
         circuits_topologies = get_unique_topologies(raw_topologies, 30)
 
     elif nodes_num == 3:
@@ -54,8 +52,8 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         circuits_topologies = get_unique_topologies(raw_topologies, 30)
 
     elif nodes_num == 4:
-        circuits_topologies_1 = [ElectricCircuit(branches_num=branches_num, nodes=template_four_nodes_1).create_nodes_connections() for _ in range(300)]
-        circuits_topologies_2 = [ElectricCircuit(branches_num=branches_num, nodes=template_four_nodes_2).create_nodes_connections() for _ in range(300)]
+        circuits_topologies_1 = [ElectricCircuit(branches_num=branches_num, nodes=template_four_nodes_1).create_nodes_connections() for _ in range(500)]
+        circuits_topologies_2 = [ElectricCircuit(branches_num=branches_num, nodes=template_four_nodes_2).create_nodes_connections() for _ in range(500)]
 
         unique_1 = get_unique_topologies(circuits_topologies_1, 15)
         unique_2 = get_unique_topologies(circuits_topologies_2, 15)
@@ -90,7 +88,6 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
             scheme_type=scheme_type
         ).place_elements()
 
-        # Обработка ошибки
         if isinstance(placed_circuit, dict):
             return placed_circuit
 
@@ -132,6 +129,15 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         meta.add_text("resistors_num", str(resistors_num))
         meta.add_text("capacitors_num", str(capacitors_num))
         meta.add_text("inductors_num", str(inductors_num))
+
+        if scheme_type == "transient_processes":
+            for connection in circuit.layout.values():
+                for sub_connection in connection:
+                    for sub_sub_connection in sub_connection:
+                        if {'type': 'opening_switch'} in sub_sub_connection['elements']:
+                            meta.add_text("switch_info", "opening")
+                        elif {'type': 'closing_switch'} in sub_sub_connection['elements']:
+                            meta.add_text("switch_info", "closing")
 
         img.save(f'{save_path}/{SCHEMES_FOLDER}/scheme_{index}.png', pnginfo=meta)
 

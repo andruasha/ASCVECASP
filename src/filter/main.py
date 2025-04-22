@@ -502,8 +502,6 @@ def visualise_filter_scheme(scheme_nodes, quadripole_nodes, scheme_layout):
             for i in range(len(coords) - 1):
                 start = coords[i]
                 end = coords[i + 1]
-                print(c_name)
-                print([start['x'], end['x']], [start['y'], end['y']])
                 plt.plot([start['x'], end['x']], [start['y'], end['y']], 'k-', linewidth=1)
 
             if 'elements' not in segment:
