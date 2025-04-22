@@ -34,7 +34,7 @@ def at_least_one_reactive(widgets):
 
 
 def current_sources_no_more_than_nodes_minus_one(widgets):
-    cond = widgets["current_sources"].value() <= widgets["nodes"].value() - 1
+    cond = widgets["current_sources"].value() <= int(widgets["nodes"].currentText()) - 1
     return cond, "Число источников тока не должно превышать (узлы - 1)"
 
 

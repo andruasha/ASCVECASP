@@ -143,6 +143,8 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
 
         index += 1
 
+    plt.close('all')
+
     if len(unique_schemes) < 30:
         return {"code": "warning", "message": f'Удалось сгенерировать только {len(unique_schemes)} уникальных схем'}
 
