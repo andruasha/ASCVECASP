@@ -14,6 +14,9 @@ SCHEMES_FOLDER = 'schemes'
 
 
 def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num, scheme_type, save_path):
+
+    print(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num)
+
     template_two_nodes_1 = {'node1': {'x': 0, 'y': 0},
                             'node2': {'x': SCALE, 'y': 0}}
 
@@ -108,7 +111,7 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         if is_unique:
             unique_schemes.append((topology_1, circuit_1))
 
-    os.makedirs(f'{save_path}/{SCHEMES_FOLDER}')
+    os.makedirs(f'{save_path}/{SCHEMES_FOLDER}', exist_ok=True)
 
     index = 1
     for topology, circuit in circuits_topologies_paired:

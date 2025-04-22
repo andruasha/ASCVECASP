@@ -33,7 +33,7 @@ def total_elements_at_least_branches(widgets):
     try:
         branches = int(widgets["branches"].currentText())
     except Exception:
-        return True, ""  # Если поле ещё не заполнено — пропускаем
+        return True, ""
 
     total = sum([
         widgets.get(key).value() for key in [
@@ -48,7 +48,7 @@ def total_elements_not_exceed_branches_times_8(widgets):
     try:
         branches = int(widgets["branches"].currentText())
     except Exception:
-        return True, ""  # Если поле ещё не заполнено — пропускаем
+        return True, ""
 
     total = sum([
         widgets.get(key).value() for key in [
@@ -239,105 +239,117 @@ class SchemeGenerator(QWidget):
         theme_display = self.theme_combo.currentText()
         theme = theme_display_mapping.get(theme_display)
         validators_list = validators.get(theme, [])
+
         for validator in validators_list:
             is_valid, message = validator(self.widgets)
             if not is_valid:
                 self.submit_btn.setEnabled(False)
                 self.submit_btn.setToolTip(message)
                 return
+
+        if not self.selected_folder:
+            self.submit_btn.setEnabled(False)
+            self.submit_btn.setToolTip("Выберите папку для сохранения")
+            return
+
         self.submit_btn.setEnabled(True)
         self.submit_btn.setToolTip("")
 
     def submit_data(self):
-        status = {}
-        theme_display = self.theme_combo.currentText()
-        theme = theme_display_mapping[theme_display]
+        try:
+            status = {}
+            theme_display = self.theme_combo.currentText()
+            theme = theme_display_mapping[theme_display]
 
-        def get_value(key):
-            if key in self.widgets:
-                widget = self.widgets[key]
-                if isinstance(widget, QSpinBox):
-                    return widget.value()
-                elif isinstance(widget, QComboBox):
-                    return widget.currentText()
-            return None
+            def get_value(key):
+                if key in self.widgets:
+                    widget = self.widgets[key]
+                    if isinstance(widget, QSpinBox):
+                        return widget.value()
+                    elif isinstance(widget, QComboBox):
+                        text = widget.currentText()
+                        return int(text) if text.isdigit() else text
+                return None
 
-        if theme == "active_dipole":
-            status = generate_active_dipole_schemes_set(
-                nodes_num=get_value("nodes"),
-                branches_num=get_value("branches"),
-                voltage_sources_num=get_value("voltage_sources"),
-                current_sources_num=get_value("current_sources"),
-                resistors_num=get_value("resistors"),
-                save_path=self.selected_folder
-            )
+            if theme == "active_dipole":
+                status = generate_active_dipole_schemes_set(
+                    nodes_num=get_value("nodes"),
+                    branches_num=get_value("branches"),
+                    voltage_sources_num=get_value("voltage_sources"),
+                    current_sources_num=get_value("current_sources"),
+                    resistors_num=get_value("resistors"),
+                    save_path=self.selected_folder
+                )
 
-        elif theme == "coupling_coefficient":
-            status = generate_coupling_coefficient_schemes_set(
-                nodes_num=get_value("nodes"),
-                branches_num=get_value("branches"),
-                voltage_sources_num=get_value("voltage_sources"),
-                current_sources_num=get_value("current_sources"),
-                resistors_num=get_value("resistors"),
-                save_path=self.selected_folder
-            )
+            elif theme == "coupling_coefficient":
+                status = generate_coupling_coefficient_schemes_set(
+                    nodes_num=get_value("nodes"),
+                    branches_num=get_value("branches"),
+                    voltage_sources_num=get_value("voltage_sources"),
+                    current_sources_num=get_value("current_sources"),
+                    resistors_num=get_value("resistors"),
+                    save_path=self.selected_folder
+                )
 
-        elif theme == "direct_current":
-            status = generate_direct_current_schemes_set(
-                nodes_num=get_value("nodes"),
-                branches_num=get_value("branches"),
-                voltage_sources_num=get_value("voltage_sources"),
-                current_sources_num=get_value("current_sources"),
-                resistors_num=get_value("resistors"),
-                save_path=self.selected_folder
-            )
+            elif theme == "direct_current":
+                status = generate_direct_current_schemes_set(
+                    nodes_num=get_value("nodes"),
+                    branches_num=get_value("branches"),
+                    voltage_sources_num=get_value("voltage_sources"),
+                    current_sources_num=get_value("current_sources"),
+                    resistors_num=get_value("resistors"),
+                    save_path=self.selected_folder
+                )
 
-        elif theme == "alternating_current":
-            status = generate_alternating_current_schemes_set(
-                nodes_num=get_value("nodes"),
-                branches_num=get_value("branches"),
-                voltage_sources_num=get_value("voltage_sources"),
-                current_sources_num=get_value("current_sources"),
-                resistors_num=get_value("resistors"),
-                capacitors_num=get_value("capacitors"),
-                inductors_num=get_value("inductors"),
-                save_path=self.selected_folder
-            )
+            elif theme == "alternating_current":
+                status = generate_alternating_current_schemes_set(
+                    nodes_num=get_value("nodes"),
+                    branches_num=get_value("branches"),
+                    voltage_sources_num=get_value("voltage_sources"),
+                    current_sources_num=get_value("current_sources"),
+                    resistors_num=get_value("resistors"),
+                    capacitors_num=get_value("capacitors"),
+                    inductors_num=get_value("inductors"),
+                    save_path=self.selected_folder
+                )
 
-        elif theme == "transient_processes":
-            status = generate_transient_processes_schemes_set(
-                nodes_num=get_value("nodes"),
-                branches_num=get_value("branches"),
-                voltage_sources_num=get_value("voltage_sources"),
-                current_sources_num=get_value("current_sources"),
-                resistors_num=get_value("resistors"),
-                capacitors_num=get_value("capacitors"),
-                inductors_num=get_value("inductors"),
-                save_path=self.selected_folder
-            )
+            elif theme == "transient_processes":
+                status = generate_transient_processes_schemes_set(
+                    nodes_num=get_value("nodes"),
+                    branches_num=get_value("branches"),
+                    voltage_sources_num=get_value("voltage_sources"),
+                    current_sources_num=get_value("current_sources"),
+                    resistors_num=get_value("resistors"),
+                    capacitors_num=get_value("capacitors"),
+                    inductors_num=get_value("inductors"),
+                    save_path=self.selected_folder
+                )
 
-        elif theme == "active_quadripole":
-            status = generate_active_quadripole_schemes_set(
-                scheme_type=get_value("scheme_type"),
-                resistors_num=get_value("resistors"),
-                capacitors_num=get_value("capacitors"),
-                inductors_num=get_value("inductors"),
-                save_path=self.selected_folder
-            )
+            elif theme == "active_quadripole":
+                status = generate_active_quadripole_schemes_set(
+                    scheme_type=get_value("scheme_type"),
+                    resistors_num=get_value("resistors"),
+                    capacitors_num=get_value("capacitors"),
+                    inductors_num=get_value("inductors"),
+                    save_path=self.selected_folder
+                )
 
-        elif theme == "filter":
-            status = generate_filter_schemes_set(
-                scheme_type=get_value("scheme_type"),
-                filter_type=get_value("filter_type"),
-                save_path=self.selected_folder
-            )
+            elif theme == "filter":
+                status = generate_filter_schemes_set(
+                    scheme_type=get_value("scheme_type"),
+                    filter_type=get_value("filter_type"),
+                    save_path=self.selected_folder
+                )
 
-        if status['code'] == "success":
-            QMessageBox.information(self, "Success", status['message'])
-        elif status['code'] == "warning":
-            QMessageBox.warning(self, "Warning", status['message'])
-        elif status['code'] == "error":
-            QMessageBox.critical(self, "Error", status['message'])
+            if status['code'] == "success":
+                QMessageBox.information(self, "Success", status['message'])
+            elif status['code'] == "warning":
+                QMessageBox.warning(self, "Warning", status['message'])
+            elif status['code'] == "error":
+                QMessageBox.critical(self, "Error", status['message'])
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f'Возникла непредвиденная ошибка: {str(e)}')
+            print(f'Возникла непредвиденная ошибка: {str(e)}')
 
 
 if __name__ == "__main__":
