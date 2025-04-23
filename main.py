@@ -128,6 +128,32 @@ filter_to_schemes = {
     "BSF": ["G", "T_back_coupling"]
 }
 
+filter_type_display_mapping = {
+    "Фильтр нижних частот (LPF)": "LPF",
+    "Фильтр верхних частот (HPF)": "HPF",
+    "Полосовой фильтр (BPF)": "BPF",
+    "Режекторный фильтр (BSF)": "BSF"
+}
+filter_type_reverse_mapping = {v: k for k, v in filter_type_display_mapping.items()}
+
+active_quadripole_scheme_display_mapping = {
+    "G": "Г-образная",
+    "P": "П-образная",
+    "T": "Т-образная",
+    "T_bridge": "Т-образная мостовая",
+    "T_back_coupling": "Т-образная с обратной связью"
+}
+active_quadripole_scheme_reverse_mapping = {v: k for k, v in active_quadripole_scheme_display_mapping.items()}
+
+scheme_type_display_mapping = {
+    "G": "Г-образная",
+    "P": "П-образная",
+    "T": "Т-образная",
+    "T_bridge": "Т-образная мостовая",
+    "T_back_coupling": "Т-образная с обратной связью"
+}
+scheme_type_reverse_mapping = {v: k for k, v in scheme_type_display_mapping.items()}
+
 
 class SchemeGenerator(QWidget):
     def __init__(self):
@@ -180,7 +206,7 @@ class SchemeGenerator(QWidget):
         add_spin("Индуктивности:", "inductors")
 
         self.filter_type_combo = QComboBox()
-        self.filter_type_combo.addItems(filter_to_schemes.keys())
+        self.filter_type_combo.addItems(filter_type_display_mapping.keys())
         self.filter_type_combo.currentTextChanged.connect(self.update_scheme_options)
         self.filter_type_combo.currentTextChanged.connect(self.validate_inputs)
         self.widgets["filter_type"] = self.filter_type_combo
@@ -233,15 +259,16 @@ class SchemeGenerator(QWidget):
             self.update_scheme_options()
         elif theme == "active_quadripole" and "scheme_type" in visible:
             self.scheme_type_combo.clear()
-            self.scheme_type_combo.addItems(active_quadripole_schemes)
+            self.scheme_type_combo.addItems([active_quadripole_scheme_display_mapping[s] for s in active_quadripole_schemes])
         self.update_branches_range()
         self.validate_inputs()
 
     def update_scheme_options(self):
-        filter_type = self.filter_type_combo.currentText()
-        schemes = filter_to_schemes.get(filter_type, [])
+        filter_display = self.filter_type_combo.currentText()
+        filter_internal = filter_type_display_mapping.get(filter_display, "")
+        schemes = filter_to_schemes.get(filter_internal, [])
         self.scheme_type_combo.clear()
-        self.scheme_type_combo.addItems(schemes)
+        self.scheme_type_combo.addItems([scheme_type_display_mapping[s] for s in schemes])
 
     def choose_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Выберите папку для сохранения")
@@ -346,7 +373,7 @@ class SchemeGenerator(QWidget):
 
             elif theme == "active_quadripole":
                 status = generate_active_quadripole_schemes_set(
-                    scheme_type=get_value("scheme_type"),
+                    scheme_type=active_quadripole_scheme_reverse_mapping.get(get_value("scheme_type")),
                     resistors_num=get_value("resistors"),
                     capacitors_num=get_value("capacitors"),
                     inductors_num=get_value("inductors"),
@@ -355,8 +382,8 @@ class SchemeGenerator(QWidget):
 
             elif theme == "filter":
                 status = generate_filter_schemes_set(
-                    scheme_type=get_value("scheme_type"),
-                    filter_type=get_value("filter_type"),
+                    scheme_type=scheme_type_reverse_mapping.get(get_value("scheme_type")),
+                    filter_type=filter_type_display_mapping.get(self.filter_type_combo.currentText()),
                     save_path=self.selected_folder
                 )
 
