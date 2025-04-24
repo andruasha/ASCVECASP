@@ -1,6 +1,7 @@
 import sys
 import os
 import subprocess
+import traceback
 from PySide6.QtWidgets import QApplication
 from PySide6.QtWidgets import QWidget
 from PySide6.QtWidgets import QLabel
@@ -402,7 +403,7 @@ class SchemeGenerator(QWidget):
 
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f'Возникла непредвиденная ошибка: {str(e)}')
-            print(f'Ошибка: {str(e)}')
+            traceback.print_exc()
 
         finally:
             self.setEnabled(True)

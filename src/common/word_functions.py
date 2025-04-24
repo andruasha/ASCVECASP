@@ -60,12 +60,14 @@ def add_schemes_to_word(scheme_type, save_path):
                 descriptions.append(f"{element_name}={element_value}")
                 voltages.append(element_name)
             elif element_name.startswith('I'):
-                descriptions.append(f"{element_name}={element_value}")
+                descriptions.append(f"{element_name}={element_value.replace('.', ',')}")
                 currents.append(element_name)
-            elif element_name.startswith('R') or element_name.startswith('C') or element_name.startswith('L'):
+            elif element_name.startswith('R'):
                 descriptions.append(f"{element_name}={element_value}")
                 resistors.append(element_name)
-            elif element_name.startswith('C') or element_name.startswith('L'):
+            elif element_name.startswith('C'):
+                descriptions.append(f"{element_name}={element_value.replace('.', ',')}")
+            elif element_name.startswith('L'):
                 descriptions.append(f"{element_name}={element_value}")
 
         if scheme_type == "alternating_current" or scheme_type == "transient_processes":
@@ -91,9 +93,9 @@ def add_schemes_to_word(scheme_type, save_path):
 
         if switch_info != "no":
             if switch_info == "opening":
-                descriptions.append("Ключ открывается")
+                descriptions.append("Ключ замыкается")
             elif switch_info == "closing":
-                descriptions.append("Ключ закрывается")
+                descriptions.append("Ключ размыкается")
 
         row_cells[2].text = '\n'.join(descriptions)
 

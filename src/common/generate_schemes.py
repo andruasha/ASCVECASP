@@ -111,6 +111,7 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
             unique_schemes.append((topology_1, circuit_1))
 
     os.makedirs(f'{save_path}/{SCHEMES_FOLDER}', exist_ok=True)
+    os.makedirs(f'{save_path}/{SPICE_FOLDER}', exist_ok=True)
 
     index = 1
     for topology, circuit in circuits_topologies_paired:
@@ -130,11 +131,11 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         for i in range(voltage_sources_num):
             elements_values[f"V{i+1}"] = str(random.randint(15, 310))
         for i in range(current_sources_num):
-            elements_values[f"I{i+1}"] = str(round(random.uniform(0.15, 3), 2)).replace(".", ",")
+            elements_values[f"I{i+1}"] = str(round(random.uniform(0.15, 3), 2))
         for i in range(resistors_num):
             elements_values[f"R{i+1}"] = str(random.randint(5, 100))
         for i in range(capacitors_num):
-            elements_values[f"C{i+1}"] = str(round(random.uniform(0.05, 1), 2)).replace(".", ",")
+            elements_values[f"C{i+1}"] = str(round(random.uniform(0.05, 1), 2))
         for i in range(inductors_num):
             elements_values[f"L{i+1}"] = str(random.randint(1, 20))
 
