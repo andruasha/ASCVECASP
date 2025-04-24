@@ -8,9 +8,11 @@ from src.common.compare_functions import compare_topologies, compare_layouts
 from src.common.electric_circuit import ElectricCircuit
 from src.common.elements_places import ElementsPlacer
 from src.common.visualize_circuit import CircuitVisualize
+from src.common.generate_ltspice_netlists import generate_ltpsice_netlist
 
 
 SCHEMES_FOLDER = 'schemes'
+SPICE_FOLDER = 'spice'
 
 
 def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num, scheme_type, save_path):
@@ -123,12 +125,32 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         buf.seek(0)
         img = Image.open(buf)
 
+        elements_values = {}
+
+        for i in range(voltage_sources_num):
+            elements_values[f"V{i+1}"] = str(random.randint(15, 310))
+        for i in range(current_sources_num):
+            elements_values[f"I{i+1}"] = str(round(random.uniform(0.15, 3), 2)).replace(".", ",")
+        for i in range(resistors_num):
+            elements_values[f"R{i+1}"] = str(random.randint(5, 100))
+        for i in range(capacitors_num):
+            elements_values[f"C{i+1}"] = str(round(random.uniform(0.05, 1), 2)).replace(".", ",")
+        for i in range(inductors_num):
+            elements_values[f"L{i+1}"] = str(random.randint(1, 20))
+
         meta = PngImagePlugin.PngInfo()
-        meta.add_text("voltage_sources_num", str(voltage_sources_num))
-        meta.add_text("current_sources_num", str(current_sources_num))
-        meta.add_text("resistors_num", str(resistors_num))
-        meta.add_text("capacitors_num", str(capacitors_num))
-        meta.add_text("inductors_num", str(inductors_num))
+
+        for element_name, element_value in elements_values.items():
+            if element_name.startswith("V"):
+                meta.add_text(element_name, f"{element_value} В")
+            elif element_name.startswith("I"):
+                meta.add_text(element_name, f"{element_value} А")
+            elif element_name.startswith("R"):
+                meta.add_text(element_name, f"{element_value} Ом")
+            elif element_name.startswith("C"):
+                meta.add_text(element_name, f"{element_value} мкФ")
+            elif element_name.startswith("L"):
+                meta.add_text(element_name, f"{element_value} мГн")
 
         if scheme_type == "transient_processes":
             for connection in circuit.layout.values():
@@ -140,6 +162,12 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
                             meta.add_text("switch_info", "closing")
 
         img.save(f'{save_path}/{SCHEMES_FOLDER}/scheme_{index}.png', pnginfo=meta)
+
+        generate_ltpsice_netlist(
+            save_path=f'{save_path}/{SPICE_FOLDER}/scheme_{index}.net',
+            circuit=circuit,
+            elements_values=elements_values
+        )
 
         index += 1
 

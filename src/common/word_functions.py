@@ -34,7 +34,6 @@ def add_schemes_to_word(scheme_type, save_path):
         row_cells[2].width = Inches(2.5)
 
         image_path = os.path.join(save_path, SCHEMES_FOLDER, f'scheme_{i}.png')
-        resistors_num = capacitors_num = inductors_num = 0
 
         if os.path.exists(image_path):
             with Image.open(image_path) as img:
@@ -46,11 +45,6 @@ def add_schemes_to_word(scheme_type, save_path):
                 row_cells[1].paragraphs[0].add_run().add_picture(image_path, width=display_width)
 
                 metadata = img.info
-                voltage_sources_num = int(metadata.get('voltage_sources_num', 0))
-                current_sources_num = int(metadata.get('current_sources_num', 0))
-                resistors_num = int(metadata.get('resistors_num', 0))
-                capacitors_num = int(metadata.get('capacitors_num', 0))
-                inductors_num = int(metadata.get('inductors_num', 0))
                 switch_info = metadata.get('switch_info', "no")
         else:
             row_cells[1].text = 'Изображение не найдено'
@@ -61,28 +55,18 @@ def add_schemes_to_word(scheme_type, save_path):
         currents = []
         resistors = []
 
-        for vs in range(1, voltage_sources_num + 1):
-            voltage = random.randint(15, 310)
-            voltages.append(voltage)
-            descriptions.append(f"V{vs}={voltage} В")
-
-        for cs in range(1, current_sources_num + 1):
-            current = round(random.uniform(0.15, 3), 2)
-            currents.append(current)
-            descriptions.append(f"I{cs}={current} А")
-
-        for r in range(1, resistors_num + 1):
-            resistance = random.randint(5, 100)
-            resistors.append(resistance)
-            descriptions.append(f"R{r}={resistance} Ом")
-
-        for c in range(1, capacitors_num + 1):
-            capacity = round(random.uniform(0.05, 1), 2)
-            descriptions.append(f"C{c}={capacity} мкФ")
-
-        for l in range(1, inductors_num + 1):
-            inductance = random.randint(1, 20)
-            descriptions.append(f"L{l}={inductance} мГн")
+        for element_name, element_value in metadata.items():
+            if element_name.startswith('V'):
+                descriptions.append(f"{element_name}={element_value}")
+                voltages.append(element_name)
+            elif element_name.startswith('I'):
+                descriptions.append(f"{element_name}={element_value}")
+                currents.append(element_name)
+            elif element_name.startswith('R') or element_name.startswith('C') or element_name.startswith('L'):
+                descriptions.append(f"{element_name}={element_value}")
+                resistors.append(element_name)
+            elif element_name.startswith('C') or element_name.startswith('L'):
+                descriptions.append(f"{element_name}={element_value}")
 
         if scheme_type == "alternating_current" or scheme_type == "transient_processes":
             frequency = random.randint(1, 20)
