@@ -13,6 +13,7 @@ from PySide6.QtWidgets import QVBoxLayout
 from PySide6.QtWidgets import QFormLayout
 from PySide6.QtWidgets import QHBoxLayout
 from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QLineEdit
 from src.active_dipole.main import generate_active_dipole_schemes_set
 from src.coupling_coefficient.main import generate_coupling_coefficient_schemes_set
 from src.direct_current.main import generate_direct_current_schemes_set
@@ -168,6 +169,7 @@ class SchemeGenerator(QWidget):
         self.widgets = None
         self.form = None
         self.theme_combo = None
+        self.folder_name_input = None
         self.setWindowTitle("ASCVECASP")
         self.setMinimumSize(400, 600)
         self.init_ui()
@@ -218,13 +220,19 @@ class SchemeGenerator(QWidget):
         self.widgets["scheme_type"] = self.scheme_type_combo
         self.form.addRow("Тип схемы:", self.scheme_type_combo)
 
-        folder_layout = QHBoxLayout()
         self.folder_label = QLabel("Папка не выбрана")
         self.folder_btn = QPushButton("Выбрать папку")
         self.folder_btn.clicked.connect(self.choose_folder)
+        folder_layout = QHBoxLayout()
         folder_layout.addWidget(self.folder_btn)
         folder_layout.addWidget(self.folder_label)
-        layout.addLayout(folder_layout)
+        folder_container = QWidget()
+        folder_container.setLayout(folder_layout)
+        self.form.addRow("Папка:", folder_container)
+
+        self.folder_name_input = QLineEdit()
+        self.folder_name_input.textChanged.connect(self.validate_inputs)
+        self.form.addRow("Название папки:", self.folder_name_input)
 
         self.submit_btn = QPushButton("Создать")
         self.submit_btn.clicked.connect(self.submit_data)
@@ -292,7 +300,12 @@ class SchemeGenerator(QWidget):
 
         if not self.selected_folder:
             self.submit_btn.setEnabled(False)
-            self.submit_btn.setToolTip("Выберите папку для сохранения")
+            self.submit_btn.setToolTip("Выберите путь для сохранения")
+            return
+
+        if not self.folder_name_input.text().strip():
+            self.submit_btn.setEnabled(False)
+            self.submit_btn.setToolTip("Введите название папки")
             return
 
         self.submit_btn.setEnabled(True)
@@ -325,7 +338,7 @@ class SchemeGenerator(QWidget):
                     voltage_sources_num=get_value("voltage_sources"),
                     current_sources_num=get_value("current_sources"),
                     resistors_num=get_value("resistors"),
-                    save_path=self.selected_folder
+                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
                 )
 
             elif theme == "coupling_coefficient":
@@ -335,7 +348,7 @@ class SchemeGenerator(QWidget):
                     voltage_sources_num=get_value("voltage_sources"),
                     current_sources_num=get_value("current_sources"),
                     resistors_num=get_value("resistors"),
-                    save_path=self.selected_folder
+                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
                 )
 
             elif theme == "direct_current":
@@ -345,7 +358,7 @@ class SchemeGenerator(QWidget):
                     voltage_sources_num=get_value("voltage_sources"),
                     current_sources_num=get_value("current_sources"),
                     resistors_num=get_value("resistors"),
-                    save_path=self.selected_folder
+                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
                 )
 
             elif theme == "alternating_current":
@@ -357,7 +370,7 @@ class SchemeGenerator(QWidget):
                     resistors_num=get_value("resistors"),
                     capacitors_num=get_value("capacitors"),
                     inductors_num=get_value("inductors"),
-                    save_path=self.selected_folder
+                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
                 )
 
             elif theme == "transient_processes":
@@ -369,7 +382,7 @@ class SchemeGenerator(QWidget):
                     resistors_num=get_value("resistors"),
                     capacitors_num=get_value("capacitors"),
                     inductors_num=get_value("inductors"),
-                    save_path=self.selected_folder
+                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
                 )
 
             elif theme == "active_quadripole":
@@ -378,14 +391,14 @@ class SchemeGenerator(QWidget):
                     resistors_num=get_value("resistors"),
                     capacitors_num=get_value("capacitors"),
                     inductors_num=get_value("inductors"),
-                    save_path=self.selected_folder
+                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
                 )
 
             elif theme == "filter":
                 status = generate_filter_schemes_set(
                     scheme_type=scheme_type_reverse_mapping.get(get_value("scheme_type")),
                     filter_type=filter_type_display_mapping.get(self.filter_type_combo.currentText()),
-                    save_path=self.selected_folder
+                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
                 )
 
             if status['code'] in ["success", "warning"]:
@@ -397,7 +410,7 @@ class SchemeGenerator(QWidget):
                 ok_btn = msg_box.addButton(QMessageBox.Ok)
                 msg_box.exec()
                 if msg_box.clickedButton() == open_btn:
-                    open_folder(self.selected_folder)
+                    open_folder(os.path.join(self.selected_folder, self.folder_name_input.text().strip()))
             elif status['code'] == "error":
                 QMessageBox.critical(self, "Ошибка", status['message'])
 
