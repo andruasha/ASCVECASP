@@ -3,12 +3,12 @@ import os
 from docx import Document
 from docx.shared import Inches
 from PIL import Image
+from conf.config import IMAGES_FOLDER
+from conf.config import DOCX_NAME
 
 
 MAX_IMAGE_WIDTH_INCHES = 3
 NUMBER_COL_WIDTH = Inches(0.8)
-SCHEMES_FOLDER = 'schemes'
-OUTPUT_DOCX = 'generated_schemes.docx'
 
 
 def add_schemes_to_word(scheme_type, save_path):
@@ -33,7 +33,7 @@ def add_schemes_to_word(scheme_type, save_path):
         row_cells[1].width = MAX_IMAGE_WIDTH_INCHES
         row_cells[2].width = Inches(2.5)
 
-        image_path = os.path.join(save_path, SCHEMES_FOLDER, f'scheme_{i}.png')
+        image_path = os.path.join(save_path, IMAGES_FOLDER, f'scheme_{i}.png')
 
         if os.path.exists(image_path):
             with Image.open(image_path) as img:
@@ -99,5 +99,4 @@ def add_schemes_to_word(scheme_type, save_path):
 
         row_cells[2].text = '\n'.join(descriptions)
 
-    doc.save(f'{save_path}/{OUTPUT_DOCX}')
-    print(f'Файл сохранён: {OUTPUT_DOCX}')
+    doc.save(f'{save_path}/{DOCX_NAME}')

@@ -4,15 +4,13 @@ import os
 import matplotlib.pyplot as plt
 from PIL import Image, PngImagePlugin
 from conf.config import SCALE
+from conf.config import IMAGES_FOLDER
+from conf.config import SPICE_FOLDER
 from src.common.compare_functions import compare_topologies, compare_layouts
 from src.common.electric_circuit import ElectricCircuit
 from src.common.elements_places import ElementsPlacer
 from src.common.visualize_circuit import CircuitVisualize
 from src.common.generate_ltspice_netlists import generate_ltpsice_netlist
-
-
-SCHEMES_FOLDER = 'schemes'
-SPICE_FOLDER = 'spice'
 
 
 def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_sources_num, resistors_num, inductors_num, capacitors_num, scheme_type, save_path):
@@ -110,7 +108,7 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         if is_unique:
             unique_schemes.append((topology_1, circuit_1))
 
-    os.makedirs(f'{save_path}/{SCHEMES_FOLDER}', exist_ok=True)
+    os.makedirs(f'{save_path}/{IMAGES_FOLDER}', exist_ok=True)
     os.makedirs(f'{save_path}/{SPICE_FOLDER}', exist_ok=True)
 
     index = 1
@@ -162,11 +160,11 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
                         elif {'type': 'closing_switch'} in sub_sub_connection['elements']:
                             meta.add_text("switch_info", "closing")
 
-        img.save(f'{save_path}/{SCHEMES_FOLDER}/scheme_{index}.png', pnginfo=meta)
+        img.save(f'{save_path}/{IMAGES_FOLDER}/scheme_{index}.png', pnginfo=meta)
 
         generate_ltpsice_netlist(
             save_path=f'{save_path}/{SPICE_FOLDER}/scheme_{index}.net',
-            circuit=circuit,
+            circuit_layout=circuit.layout,
             elements_values=elements_values
         )
 
