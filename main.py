@@ -14,6 +14,9 @@ from PySide6.QtWidgets import QFormLayout
 from PySide6.QtWidgets import QHBoxLayout
 from PySide6.QtWidgets import QMessageBox
 from PySide6.QtWidgets import QLineEdit
+from PySide6.QtWidgets import QCheckBox
+from PySide6.QtWidgets import QGroupBox
+from PySide6.QtWidgets import QGridLayout
 from src.active_dipole.main import generate_active_dipole_schemes_set
 from src.coupling_coefficient.main import generate_coupling_coefficient_schemes_set
 from src.direct_current.main import generate_direct_current_schemes_set
@@ -164,12 +167,12 @@ class SchemeGenerator(QWidget):
         self.submit_btn = None
         self.folder_btn = None
         self.folder_label = None
-        self.scheme_type_combo = None
-        self.filter_type_combo = None
-        self.widgets = None
+        self.widgets = {}
         self.form = None
         self.theme_combo = None
         self.folder_name_input = None
+        self.filter_type_checkboxes = {}
+        self.scheme_type_checkboxes = {}
         self.setWindowTitle("ASCVECASP")
         self.setMinimumSize(400, 600)
         self.init_ui()
@@ -178,11 +181,11 @@ class SchemeGenerator(QWidget):
         layout = QVBoxLayout()
         self.form = QFormLayout()
         layout.addLayout(self.form)
+
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(theme_display_mapping.keys())
         self.theme_combo.currentTextChanged.connect(self.update_visible_elements)
         self.form.addRow("Тема:", self.theme_combo)
-        self.widgets = {}
 
         nodes_combo = QComboBox()
         nodes_combo.addItems([str(i) for i in range(2, 5)])
@@ -208,17 +211,26 @@ class SchemeGenerator(QWidget):
         add_spin("Конденсаторы:", "capacitors")
         add_spin("Индуктивности:", "inductors")
 
-        self.filter_type_combo = QComboBox()
-        self.filter_type_combo.addItems(filter_type_display_mapping.keys())
-        self.filter_type_combo.currentTextChanged.connect(self.update_scheme_options)
-        self.filter_type_combo.currentTextChanged.connect(self.validate_inputs)
-        self.widgets["filter_type"] = self.filter_type_combo
-        self.form.addRow("Тип фильтра:", self.filter_type_combo)
+        self.filter_group = QGroupBox("Тип фильтра:")
+        filter_layout = QGridLayout()
+        for i, (name, code) in enumerate(filter_type_display_mapping.items()):
+            cb = QCheckBox(name)
+            cb.stateChanged.connect(self.update_scheme_checkboxes)
+            filter_layout.addWidget(cb, i, 0)
+            self.filter_type_checkboxes[code] = cb
+        self.filter_group.setLayout(filter_layout)
+        self.widgets["filter_type"] = self.filter_group
+        self.form.addRow(self.filter_group)
 
-        self.scheme_type_combo = QComboBox()
-        self.scheme_type_combo.currentTextChanged.connect(self.validate_inputs)
-        self.widgets["scheme_type"] = self.scheme_type_combo
-        self.form.addRow("Тип схемы:", self.scheme_type_combo)
+        self.scheme_group = QGroupBox("Тип схемы:")
+        scheme_layout = QGridLayout()
+        for i, (code, name) in enumerate(scheme_type_display_mapping.items()):
+            cb = QCheckBox(name)
+            scheme_layout.addWidget(cb, i, 0)
+            self.scheme_type_checkboxes[code] = cb
+        self.scheme_group.setLayout(scheme_layout)
+        self.widgets["scheme_type"] = self.scheme_group
+        self.form.addRow(self.scheme_group)
 
         self.folder_label = QLabel("Папка не выбрана")
         self.folder_btn = QPushButton("Выбрать папку")
@@ -259,25 +271,33 @@ class SchemeGenerator(QWidget):
         theme_display = self.theme_combo.currentText()
         theme = theme_display_mapping[theme_display]
         visible = set(element_mappings.get(theme, []))
+
         for key, widget in self.widgets.items():
-            row = self.form.labelForField(widget)
+            row = self.form.labelForField(widget) or widget
             should_show = key in visible
             widget.setVisible(should_show)
-            row.setVisible(should_show)
-        if "scheme_type" in visible and "filter_type" in visible:
-            self.update_scheme_options()
-        elif theme == "active_quadripole" and "scheme_type" in visible:
-            self.scheme_type_combo.clear()
-            self.scheme_type_combo.addItems([active_quadripole_scheme_display_mapping[s] for s in active_quadripole_schemes])
+            if hasattr(row, 'setVisible'):
+                row.setVisible(should_show)
+
+        if theme == "filter":
+            self.update_scheme_checkboxes()
+        elif theme == "active_quadripole":
+            for code, cb in self.scheme_type_checkboxes.items():
+                cb.setEnabled(code in active_quadripole_schemes)
+                cb.setChecked(False)
+
         self.update_branches_range()
         self.validate_inputs()
 
-    def update_scheme_options(self):
-        filter_display = self.filter_type_combo.currentText()
-        filter_internal = filter_type_display_mapping.get(filter_display, "")
-        schemes = filter_to_schemes.get(filter_internal, [])
-        self.scheme_type_combo.clear()
-        self.scheme_type_combo.addItems([scheme_type_display_mapping[s] for s in schemes])
+    def update_scheme_checkboxes(self):
+        selected_filters = [ftype for ftype, cb in self.filter_type_checkboxes.items() if cb.isChecked()]
+        allowed_schemes = set()
+        for f in selected_filters:
+            allowed_schemes.update(filter_to_schemes.get(f, []))
+
+        for scheme_code, cb in self.scheme_type_checkboxes.items():
+            cb.setEnabled(scheme_code in allowed_schemes)
+            cb.setChecked(cb.isChecked() and scheme_code in allowed_schemes)
 
     def choose_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Выберите папку для сохранения")
@@ -308,6 +328,18 @@ class SchemeGenerator(QWidget):
             self.submit_btn.setToolTip("Введите название папки")
             return
 
+        if theme == "filter":
+            filters_selected = any(cb.isChecked() for cb in self.filter_type_checkboxes.values())
+            schemes_selected = any(cb.isChecked() for cb in self.scheme_type_checkboxes.values() if cb.isEnabled())
+            if not filters_selected:
+                self.submit_btn.setEnabled(False)
+                self.submit_btn.setToolTip("Выберите хотя бы один тип фильтра")
+                return
+            if not schemes_selected:
+                self.submit_btn.setEnabled(False)
+                self.submit_btn.setToolTip("Выберите хотя бы один доступный тип схемы")
+                return
+
         self.submit_btn.setEnabled(True)
         self.submit_btn.setToolTip("")
 
@@ -331,75 +363,55 @@ class SchemeGenerator(QWidget):
                         return int(text) if text.isdigit() else text
                 return None
 
-            if theme == "active_dipole":
-                status = generate_active_dipole_schemes_set(
-                    nodes_num=get_value("nodes"),
-                    branches_num=get_value("branches"),
-                    voltage_sources_num=get_value("voltage_sources"),
-                    current_sources_num=get_value("current_sources"),
-                    resistors_num=get_value("resistors"),
-                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
-                )
+            save_path = os.path.join(self.selected_folder, self.folder_name_input.text().strip())
 
-            elif theme == "coupling_coefficient":
-                status = generate_coupling_coefficient_schemes_set(
-                    nodes_num=get_value("nodes"),
-                    branches_num=get_value("branches"),
-                    voltage_sources_num=get_value("voltage_sources"),
-                    current_sources_num=get_value("current_sources"),
-                    resistors_num=get_value("resistors"),
-                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
-                )
-
-            elif theme == "direct_current":
-                status = generate_direct_current_schemes_set(
-                    nodes_num=get_value("nodes"),
-                    branches_num=get_value("branches"),
-                    voltage_sources_num=get_value("voltage_sources"),
-                    current_sources_num=get_value("current_sources"),
-                    resistors_num=get_value("resistors"),
-                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
-                )
-
-            elif theme == "alternating_current":
-                status = generate_alternating_current_schemes_set(
-                    nodes_num=get_value("nodes"),
-                    branches_num=get_value("branches"),
-                    voltage_sources_num=get_value("voltage_sources"),
-                    current_sources_num=get_value("current_sources"),
-                    resistors_num=get_value("resistors"),
-                    capacitors_num=get_value("capacitors"),
-                    inductors_num=get_value("inductors"),
-                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
-                )
-
-            elif theme == "transient_processes":
-                status = generate_transient_processes_schemes_set(
-                    nodes_num=get_value("nodes"),
-                    branches_num=get_value("branches"),
-                    voltage_sources_num=get_value("voltage_sources"),
-                    current_sources_num=get_value("current_sources"),
-                    resistors_num=get_value("resistors"),
-                    capacitors_num=get_value("capacitors"),
-                    inductors_num=get_value("inductors"),
-                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
+            if theme == "filter":
+                selected_filters = [ftype for ftype, cb in self.filter_type_checkboxes.items() if cb.isChecked()]
+                selected_schemes = [stype for stype, cb in self.scheme_type_checkboxes.items() if cb.isChecked()]
+                print('----------------')
+                print(selected_filters)
+                print('----------------')
+                print(selected_schemes)
+                print('----------------')
+                status = generate_filter_schemes_set(
+                    scheme_type='T',
+                    filter_type='LPF',
+                    save_path=save_path
                 )
 
             elif theme == "active_quadripole":
+                selected_scheme = next((k for k, cb in self.scheme_type_checkboxes.items() if cb.isChecked()), None)
                 status = generate_active_quadripole_schemes_set(
-                    scheme_type=active_quadripole_scheme_reverse_mapping.get(get_value("scheme_type")),
+                    scheme_type=selected_scheme,
                     resistors_num=get_value("resistors"),
                     capacitors_num=get_value("capacitors"),
                     inductors_num=get_value("inductors"),
-                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
+                    save_path=save_path
                 )
 
-            elif theme == "filter":
-                status = generate_filter_schemes_set(
-                    scheme_type=scheme_type_reverse_mapping.get(get_value("scheme_type")),
-                    filter_type=filter_type_display_mapping.get(self.filter_type_combo.currentText()),
-                    save_path=os.path.join(self.selected_folder, self.folder_name_input.text().strip())
-                )
+            else:
+                params = {
+                    "nodes_num": get_value("nodes"),
+                    "branches_num": get_value("branches"),
+                    "voltage_sources_num": get_value("voltage_sources"),
+                    "current_sources_num": get_value("current_sources"),
+                    "resistors_num": get_value("resistors"),
+                    "save_path": save_path
+                }
+
+                if theme in ["alternating_current", "transient_processes"]:
+                    params["capacitors_num"] = get_value("capacitors")
+                    params["inductors_num"] = get_value("inductors")
+
+                generators = {
+                    "active_dipole": generate_active_dipole_schemes_set,
+                    "coupling_coefficient": generate_coupling_coefficient_schemes_set,
+                    "direct_current": generate_direct_current_schemes_set,
+                    "alternating_current": generate_alternating_current_schemes_set,
+                    "transient_processes": generate_transient_processes_schemes_set
+                }
+
+                status = generators[theme](**params)
 
             if status['code'] in ["success", "warning"]:
                 msg_box = QMessageBox(self)
@@ -407,17 +419,16 @@ class SchemeGenerator(QWidget):
                 msg_box.setWindowTitle("Успешно" if status['code'] == "success" else "Предупреждение")
                 msg_box.setText(status['message'])
                 open_btn = msg_box.addButton("Открыть папку", QMessageBox.ActionRole)
-                ok_btn = msg_box.addButton(QMessageBox.Ok)
+                msg_box.addButton(QMessageBox.Ok)
                 msg_box.exec()
                 if msg_box.clickedButton() == open_btn:
-                    open_folder(os.path.join(self.selected_folder, self.folder_name_input.text().strip()))
+                    open_folder(save_path)
             elif status['code'] == "error":
                 QMessageBox.critical(self, "Ошибка", status['message'])
 
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f'Возникла непредвиденная ошибка: {str(e)}')
             traceback.print_exc()
-
         finally:
             self.setEnabled(True)
             self.submit_btn.setText("Создать")
