@@ -2,6 +2,7 @@ import sys
 import os
 import subprocess
 import traceback
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 from PySide6.QtWidgets import QWidget
 from PySide6.QtWidgets import QLabel
@@ -175,6 +176,7 @@ class SchemeGenerator(QWidget):
         self.theme_combo = None
         self.folder_name_input = None
         self.filter_generation_mode = None
+        self.error_label = None
         self.filter_type_checkboxes = {}
         self.scheme_type_checkboxes = {}
         self.setWindowTitle("ASCVECASP")
@@ -266,6 +268,23 @@ class SchemeGenerator(QWidget):
         self.submit_btn.clicked.connect(self.submit_data)
         layout.addWidget(self.submit_btn)
 
+        self.error_label = QLabel()
+        self.error_label.setStyleSheet(
+            '''
+            color: red;
+            background - color: transparent;
+            padding: 4
+            px;
+            font - size: 12
+            px;
+            '''
+        )
+        self.error_label.setWordWrap(True)
+        self.error_label.setAlignment(Qt.AlignCenter)
+        self.error_label.setMaximumHeight(30)
+        self.error_label.setVisible(False)
+        layout.addWidget(self.error_label)
+
         self.setLayout(layout)
         self.selected_folder = ""
         self.update_visible_elements()
@@ -346,25 +365,25 @@ class SchemeGenerator(QWidget):
         for validator in validators_list:
             is_valid, message = validator(self.widgets)
             if not is_valid:
+                self.show_error(message)
                 self.submit_btn.setEnabled(False)
-                self.submit_btn.setToolTip(message)
                 return
 
         if not self.selected_folder:
+            self.show_error("Выберите путь для сохранения")
             self.submit_btn.setEnabled(False)
-            self.submit_btn.setToolTip("Выберите путь для сохранения")
             return
 
         if not self.folder_name_input.text().strip():
+            self.show_error("Введите название папки")
             self.submit_btn.setEnabled(False)
-            self.submit_btn.setToolTip("Введите название папки")
             return
 
         if theme == "filter":
             selected_filters = [ftype for ftype, cb in self.filter_type_checkboxes.items() if cb.isChecked()]
             if not selected_filters:
+                self.show_error("Выберите хотя бы один тип фильтра")
                 self.submit_btn.setEnabled(False)
-                self.submit_btn.setToolTip("Выберите хотя бы один тип фильтра")
                 return
 
             allowed_schemes = set()
@@ -376,12 +395,16 @@ class SchemeGenerator(QWidget):
             )
 
             if not schemes_selected:
+                self.show_error("Выберите хотя бы один доступный тип схемы")
                 self.submit_btn.setEnabled(False)
-                self.submit_btn.setToolTip("Выберите хотя бы один доступный тип схемы")
                 return
 
         self.submit_btn.setEnabled(True)
         self.submit_btn.setToolTip("")
+
+    def show_error(self, message):
+        self.error_label.setText(message)
+        self.error_label.setVisible(True)
 
     def submit_data(self):
         self.setEnabled(False)
