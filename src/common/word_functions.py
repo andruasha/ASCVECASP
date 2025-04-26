@@ -69,6 +69,12 @@ def add_schemes_to_word(scheme_type, save_path):
                 descriptions.append(f"{element_name}={element_value.replace('.', ',')}")
             elif element_name.startswith('L'):
                 descriptions.append(f"{element_name}={element_value}")
+            elif element_name.startswith('fc'):
+                descriptions.append(f"{element_name}={element_value}")
+            elif element_name.startswith('f1'):
+                descriptions.append(f"{element_name}={element_value}")
+            elif element_name.startswith('f2'):
+                descriptions.append(f"{element_name}={element_value}")
 
         if scheme_type == "alternating_current" or scheme_type == "transient_processes":
             frequency = random.randint(1, 20)

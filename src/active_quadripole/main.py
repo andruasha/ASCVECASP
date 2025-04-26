@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+import os
 
 from src.common.draw_functions import draw_resistor, draw_capacitor, draw_inductor
 from src.common.word_functions import add_schemes_to_word
@@ -624,6 +625,9 @@ def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors
             unique_schemes.append(random_scheme)
 
     random.shuffle(unique_schemes)
+
+    os.makedirs(f'{save_path}/{IMAGES_FOLDER}', exist_ok=True)
+    os.makedirs(f'{save_path}/{SPICE_FOLDER}', exist_ok=True)
 
     for idx, scheme in enumerate(unique_schemes, start=1):
         visualise_active_quadripole_scheme(

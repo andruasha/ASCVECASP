@@ -134,10 +134,10 @@ filter_to_schemes = {
 }
 
 filter_type_display_mapping = {
-    "Фильтр нижних частот (LPF)": "LPF",
-    "Фильтр верхних частот (HPF)": "HPF",
-    "Полосовой фильтр (BPF)": "BPF",
-    "Режекторный фильтр (BSF)": "BSF"
+    "Фильтр нижних частот": "LPF",
+    "Фильтр верхних частот": "HPF",
+    "Полосовой фильтр": "BPF",
+    "Режекторный фильтр": "BSF"
 }
 filter_type_reverse_mapping = {v: k for k, v in filter_type_display_mapping.items()}
 
@@ -154,11 +154,14 @@ scheme_type_display_mapping = {
     "G": "Г-образная",
     "P": "П-образная",
     "T": "Т-образная",
-    "T_bridge": "Т-образная мостовая",
     "T_back_coupling": "Т-образная с обратной связью"
 }
 scheme_type_reverse_mapping = {v: k for k, v in scheme_type_display_mapping.items()}
 
+generation_mode_mapping = {
+    "Генерировать номиналы элементов": "generate_values",
+    "Генерировать граничные частоты": "generate_frequencies"
+}
 
 class SchemeGenerator(QWidget):
     def __init__(self):
@@ -171,6 +174,7 @@ class SchemeGenerator(QWidget):
         self.form = None
         self.theme_combo = None
         self.folder_name_input = None
+        self.filter_generation_mode = None
         self.filter_type_checkboxes = {}
         self.scheme_type_checkboxes = {}
         self.setWindowTitle("ASCVECASP")
@@ -216,6 +220,7 @@ class SchemeGenerator(QWidget):
         for i, (name, code) in enumerate(filter_type_display_mapping.items()):
             cb = QCheckBox(name)
             cb.stateChanged.connect(self.update_scheme_checkboxes)
+            cb.stateChanged.connect(self.validate_inputs)
             filter_layout.addWidget(cb, i, 0)
             self.filter_type_checkboxes[code] = cb
         self.filter_group.setLayout(filter_layout)
@@ -226,11 +231,22 @@ class SchemeGenerator(QWidget):
         scheme_layout = QGridLayout()
         for i, (code, name) in enumerate(scheme_type_display_mapping.items()):
             cb = QCheckBox(name)
+            cb.stateChanged.connect(self.validate_inputs)
+            cb.stateChanged.connect(self.handle_scheme_checkbox_change)
             scheme_layout.addWidget(cb, i, 0)
             self.scheme_type_checkboxes[code] = cb
         self.scheme_group.setLayout(scheme_layout)
         self.widgets["scheme_type"] = self.scheme_group
         self.form.addRow(self.scheme_group)
+
+        self.filter_generation_mode = QComboBox()
+        self.filter_generation_mode.addItems([
+            "Генерировать номиналы элементов",
+            "Генерировать граничные частоты"
+        ])
+        self.filter_generation_mode.currentTextChanged.connect(self.validate_inputs)
+        self.form.addRow("Тип генерации:", self.filter_generation_mode)
+        self.widgets["filter_generation_mode"] = self.filter_generation_mode
 
         self.folder_label = QLabel("Папка не выбрана")
         self.folder_btn = QPushButton("Выбрать папку")
@@ -253,6 +269,17 @@ class SchemeGenerator(QWidget):
         self.setLayout(layout)
         self.selected_folder = ""
         self.update_visible_elements()
+
+    def handle_scheme_checkbox_change(self):
+        theme_display = self.theme_combo.currentText()
+        theme = theme_display_mapping.get(theme_display)
+
+        if theme == "active_quadripole":
+            sender = self.sender()
+            if sender.isChecked():
+                for cb in self.scheme_type_checkboxes.values():
+                    if cb != sender:
+                        cb.setChecked(False)
 
     def update_branches_range(self):
         nodes = int(self.widgets["nodes"].currentText())
@@ -285,6 +312,11 @@ class SchemeGenerator(QWidget):
             for code, cb in self.scheme_type_checkboxes.items():
                 cb.setEnabled(code in active_quadripole_schemes)
                 cb.setChecked(False)
+
+        self.widgets["filter_generation_mode"].setVisible(theme == "filter")
+        row = self.form.labelForField(self.widgets["filter_generation_mode"])
+        if row:
+            row.setVisible(theme == "filter")
 
         self.update_branches_range()
         self.validate_inputs()
@@ -329,12 +361,20 @@ class SchemeGenerator(QWidget):
             return
 
         if theme == "filter":
-            filters_selected = any(cb.isChecked() for cb in self.filter_type_checkboxes.values())
-            schemes_selected = any(cb.isChecked() for cb in self.scheme_type_checkboxes.values() if cb.isEnabled())
-            if not filters_selected:
+            selected_filters = [ftype for ftype, cb in self.filter_type_checkboxes.items() if cb.isChecked()]
+            if not selected_filters:
                 self.submit_btn.setEnabled(False)
                 self.submit_btn.setToolTip("Выберите хотя бы один тип фильтра")
                 return
+
+            allowed_schemes = set()
+            for f in selected_filters:
+                allowed_schemes.update(filter_to_schemes.get(f, []))
+
+            schemes_selected = any(
+                cb.isChecked() for code, cb in self.scheme_type_checkboxes.items() if code in allowed_schemes
+            )
+
             if not schemes_selected:
                 self.submit_btn.setEnabled(False)
                 self.submit_btn.setToolTip("Выберите хотя бы один доступный тип схемы")
@@ -368,15 +408,13 @@ class SchemeGenerator(QWidget):
             if theme == "filter":
                 selected_filters = [ftype for ftype, cb in self.filter_type_checkboxes.items() if cb.isChecked()]
                 selected_schemes = [stype for stype, cb in self.scheme_type_checkboxes.items() if cb.isChecked()]
-                print('----------------')
-                print(selected_filters)
-                print('----------------')
-                print(selected_schemes)
-                print('----------------')
+                generation_mode_text = self.filter_generation_mode.currentText()
+                generation_mode_code = generation_mode_mapping.get(generation_mode_text)
                 status = generate_filter_schemes_set(
-                    scheme_type='T',
-                    filter_type='LPF',
-                    save_path=save_path
+                    scheme_types=selected_schemes,
+                    filter_types=selected_filters,
+                    save_path=save_path,
+                    generation_mode=generation_mode_code
                 )
 
             elif theme == "active_quadripole":
