@@ -481,8 +481,11 @@ def visualise_active_quadripole_scheme(scheme_nodes, quadripole_nodes, scheme_la
 
     for node, coords in scheme_nodes.items():
         plt.plot(coords['x'], coords['y'], 'ko', markersize=3)
-    for node, coords in quadripole_nodes.items():
-        plt.plot(coords['x'], coords['y'], 'ro', markersize=3, zorder=11)
+
+    quadripole_labels = ["1", "2", "1'", "2'"]
+    for idx, (node, coords) in enumerate(quadripole_nodes.items()):
+        plt.plot(coords['x'], coords['y'], 'ko', markersize=3, zorder=11)
+        plt.text(coords['x'], coords['y'] + 0.1, quadripole_labels[idx], ha='center', va='bottom', fontsize=8, color='black')
 
     resistor_idx = 1
     capacitor_idx = 1
