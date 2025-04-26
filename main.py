@@ -401,6 +401,7 @@ class SchemeGenerator(QWidget):
 
         self.submit_btn.setEnabled(True)
         self.submit_btn.setToolTip("")
+        self.error_label.setVisible(False)
 
     def show_error(self, message):
         self.error_label.setText(message)

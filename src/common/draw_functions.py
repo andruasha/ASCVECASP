@@ -85,7 +85,7 @@ def draw_resistor(center, name, orientation):
         ha, va = 'center', 'top'
 
     plt.gca().add_patch(rect)
-    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
+    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='black', zorder=11)
 
 
 def draw_capacitor(center, name, orientation):
@@ -197,14 +197,14 @@ def draw_capacitor(center, name, orientation):
         text_x, text_y = center['x'] + plate_length * 0.7, center['y'] - plate_length * 0.7
         ha, va = 'center', 'top'
 
-    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
+    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='black', zorder=11)
 
 
 def draw_inductor(center, name, orientation):
     num_loops = 3
-    loop_radius = SCALE / 40
-    loop_spacing = loop_radius * 2
-    total_length = loop_spacing * num_loops
+    total_length = SCALE / 10
+    loop_spacing = total_length / num_loops
+    loop_radius = loop_spacing / 2
 
     if orientation == 'horizontal':
         start_x = center['x'] - total_length / 2
@@ -318,7 +318,7 @@ def draw_inductor(center, name, orientation):
             angle)
         ha, va = 'center', 'top'
 
-    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
+    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='black', zorder=11)
 
 
 def draw_active_dipole(center, orientation):
@@ -419,7 +419,7 @@ def draw_voltage_source(center, name, orientation):
         zorder=10
     )
 
-    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
+    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='black', zorder=11)
 
 
 def draw_current_source(center, name, orientation):
@@ -480,7 +480,7 @@ def draw_current_source(center, name, orientation):
         text_x, text_y = center['x'] + radius * 1.8, center['y']
         ha, va = 'left', 'center'
 
-    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='blue', zorder=11)
+    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='black', zorder=11)
 
 
 def draw_switch(center, orientation):
@@ -531,4 +531,4 @@ def draw_circle(center, name, color='red'):
 
     plt.gca().add_patch(circle)
     plt.text(center['x'], center['y'] - radius * 1.5, name,
-             fontsize=6, ha='center', va='top', color='blue', zorder=11)
+             fontsize=6, ha='center', va='top', color='black', zorder=11)
