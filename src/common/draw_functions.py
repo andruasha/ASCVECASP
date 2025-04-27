@@ -371,8 +371,10 @@ def draw_active_dipole(center, orientation):
 
 def draw_voltage_source(center, name, orientation):
     radius = SCALE / 20
-    arrow_length = radius * 1.2
-    arrow_head_width = radius / 3
+    arrow_head_length = radius * 0.8
+    arrow_head_width = radius / 2
+
+    ax = plt.gca()
 
     circle = plt.Circle(
         (center['x'], center['y']),
@@ -382,7 +384,7 @@ def draw_voltage_source(center, name, orientation):
         linewidth=1.0,
         zorder=10
     )
-    plt.gca().add_patch(circle)
+    ax.add_patch(circle)
 
     rect = plt.Rectangle(
         (center['x'] - radius, center['y'] - radius),
@@ -391,41 +393,81 @@ def draw_voltage_source(center, name, orientation):
         edgecolor='none',
         zorder=9.5
     )
-    plt.gca().add_patch(rect)
+    ax.add_patch(rect)
 
     if orientation == 'horizontal':
-        dx, dy = arrow_length, 0
-        x_start = center['x'] - dx / 2
-        y_start = center['y']
+        x_start = center['x'] - radius
+        x_end = center['x'] + radius
+        y = center['y']
+
+        plt.plot(
+            [x_start, x_end - arrow_head_length],
+            [y, y],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+
+        triangle = np.array([
+            [x_end - 0.2 * radius, y],
+            [x_end - arrow_head_length, y + arrow_head_width / 2],
+            [x_end - arrow_head_length, y - arrow_head_width / 2]
+        ])
+
+        polygon = plt.Polygon(
+            triangle,
+            closed=True,
+            facecolor='black',
+            edgecolor='black',
+            zorder=11
+        )
+        ax.add_patch(polygon)
+
         text_x, text_y = center['x'], center['y'] - radius * 1.8
         ha, va = 'center', 'top'
+
     elif orientation == 'vertical':
-        dx, dy = 0, -arrow_length
-        x_start = center['x']
-        y_start = center['y'] + abs(dy) / 2
+        y_start = center['y'] + radius
+        y_end = center['y'] - radius
+        x = center['x']
+
+        plt.plot(
+            [x, x],
+            [y_start, y_end + arrow_head_length],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+
+        triangle = np.array([
+            [x, y_end + 0.2 * radius],
+            [x - arrow_head_width / 2, y_end + arrow_head_length],
+            [x + arrow_head_width / 2, y_end + arrow_head_length]
+        ])
+
+        polygon = plt.Polygon(
+            triangle,
+            closed=True,
+            facecolor='black',
+            edgecolor='black',
+            zorder=11
+        )
+        ax.add_patch(polygon)
+
         text_x, text_y = center['x'] + radius * 1.8, center['y']
         ha, va = 'left', 'center'
 
-    plt.arrow(
-        x_start,
-        y_start,
-        dx,
-        dy,
-        head_width=arrow_head_width,
-        head_length=arrow_head_width,
-        linewidth=1.0,
+    plt.text(
+        text_x, text_y, name,
+        fontsize=6,
+        ha=ha, va=va,
         color='black',
-        length_includes_head=True,
-        zorder=10
+        zorder=12
     )
-
-    plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='black', zorder=11)
 
 
 def draw_current_source(center, name, orientation):
     radius = SCALE / 20
-    tick_size = radius * 0.6
-    spacing = radius * 0.5
 
     circle = plt.Circle(
         (center['x'], center['y']),
@@ -446,39 +488,95 @@ def draw_current_source(center, name, orientation):
     )
     plt.gca().add_patch(rect)
 
+    x = center['x']
+    y = center['y']
+
     if orientation == 'horizontal':
-        y = center['y']
-        x1 = center['x'] - spacing / 2
-        x2 = center['x'] + spacing / 2
 
-        for x in [x1, x2]:
-            plt.plot(
-                [x - tick_size / 2, x, x - tick_size / 2],
-                [y - tick_size / 2, y, y + tick_size / 2],
-                color='black',
-                linewidth=1.0,
-                zorder=10
-            )
+        plt.plot(
+            [x - radius, x], [y, y],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+        plt.plot(
+            [x + radius, x + (radius / 2)], [y, y],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
 
-        text_x, text_y = center['x'], center['y'] - radius * 1.8
+        plt.plot(
+            [x - (radius / 3), x], [y + (radius / 3), y],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+        plt.plot(
+            [x - (radius / 3), x], [y - (radius / 3), y],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+
+        plt.plot(
+            [x + (radius / 6), x + (radius / 2)], [y + (radius / 3), y],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+        plt.plot(
+            [x + (radius / 6), x + (radius / 2)], [y - (radius / 3), y],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+
+        text_x, text_y = x, y - radius * 1.8
         ha, va = 'center', 'top'
 
     elif orientation == 'vertical':
-        x = center['x']
-        y1 = center['y'] + spacing / 2
-        y2 = center['y'] - spacing / 2
+        plt.plot(
+            [x, x], [y - radius, y],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+        plt.plot(
+            [x, x], [y + radius, y + (radius / 2)],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
 
-        for y in [y1, y2]:
-            plt.plot(
-                [x - tick_size / 2, x, x + tick_size / 2],
-                [y + tick_size / 2, y, y + tick_size / 2],
-                color='black',
-                linewidth=1.0,
-                zorder=10
-            )
+        plt.plot(
+            [x + (radius / 3), x], [y - (radius / 3), y],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+        plt.plot(
+            [x - (radius / 3), x], [y - (radius / 3), y],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
 
-        text_x, text_y = center['x'] + radius * 1.8, center['y']
-        ha, va = 'left', 'center'
+        plt.plot(
+            [x + (radius / 3), x], [y + (radius / 6), y + (radius / 2)],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+        plt.plot(
+            [x - (radius / 3), x], [y + (radius / 6), y + (radius / 2)],
+            color='black',
+            linewidth=1.0,
+            zorder=10
+        )
+
+        text_x, text_y = center['x'] + radius * 1.8, y
+        ha, va = 'center', 'top'
 
     plt.text(text_x, text_y, name, fontsize=6, ha=ha, va=va, color='black', zorder=11)
 
