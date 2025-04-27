@@ -1,11 +1,11 @@
 import random
 import os
 from docx import Document
-from docx.shared import Inches
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from PIL import Image
 from conf.config import IMAGES_FOLDER
 from conf.config import DOCX_NAME
-
 
 MAX_IMAGE_WIDTH_INCHES = 3
 NUMBER_COL_WIDTH = Inches(0.8)
@@ -13,6 +13,11 @@ NUMBER_COL_WIDTH = Inches(0.8)
 
 def add_schemes_to_word(scheme_type, save_path):
     doc = Document()
+
+    style = doc.styles['Normal']
+    font = style.font
+    font.name = 'Times New Roman'
+    font.size = Pt(13)
 
     table = doc.add_table(rows=1, cols=3)
     table.style = 'Table Grid'
@@ -26,12 +31,29 @@ def add_schemes_to_word(scheme_type, save_path):
     hdr_cells[1].width = MAX_IMAGE_WIDTH_INCHES
     hdr_cells[2].width = Inches(2.5)
 
+    for cell in hdr_cells:
+        for paragraph in cell.paragraphs:
+            paragraph.style = doc.styles['Normal']
+            for run in paragraph.runs:
+                run.font.name = 'Times New Roman'
+                run.font.size = Pt(13)
+
     for i in range(1, 31):
         row_cells = table.add_row().cells
         row_cells[0].text = str(i)
         row_cells[0].width = NUMBER_COL_WIDTH
         row_cells[1].width = MAX_IMAGE_WIDTH_INCHES
         row_cells[2].width = Inches(2.5)
+
+        for paragraph in row_cells[0].paragraphs:
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        for cell in row_cells:
+            for paragraph in cell.paragraphs:
+                paragraph.style = doc.styles['Normal']
+                for run in paragraph.runs:
+                    run.font.name = 'Times New Roman'
+                    run.font.size = Pt(13)
 
         image_path = os.path.join(save_path, IMAGES_FOLDER, f'scheme_{i}.png')
 
