@@ -6,6 +6,7 @@ from src.common.draw_functions import draw_capacitor
 from src.common.draw_functions import draw_inductor
 from src.common.draw_functions import draw_active_dipole
 from src.common.draw_functions import draw_switch
+from conf.config import SCALE
 
 
 class CircuitVisualize:
@@ -97,13 +98,19 @@ class CircuitVisualize:
                             current_position += 2 * step
 
                 elif num_lines > 1:
+                    filtered_free_lines = [
+                        (start, end) for start, end in free_lines
+                        if ((start['x'] == end['x'] and abs(end['y'] - start['y']) >= SCALE) or
+                            (start['y'] == end['y'] and abs(end['x'] - start['x']) >= SCALE))
+                    ]
+
                     total_elements = len(segment_elements)
-                    elements_per_line = total_elements // num_lines
-                    extra = total_elements % num_lines
+                    elements_per_line = total_elements // len(filtered_free_lines)
+                    extra = total_elements % len(filtered_free_lines)
 
                     element_iter = iter(segment_elements)
 
-                    for line_idx, (start, end) in enumerate(free_lines):
+                    for line_idx, (start, end) in enumerate(filtered_free_lines):
                         num_this_line = elements_per_line + (1 if line_idx < extra else 0)
 
                         if num_this_line == 0:

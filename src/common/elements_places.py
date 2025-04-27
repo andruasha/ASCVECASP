@@ -171,7 +171,17 @@ class ElementsPlacer:
                 conn_name, idx, entry = random.choice(empty_connections)
                 element_type = remaining_elements.pop()
                 entry['elements'].append({'type': element_type})
+
             else:
-                conn_name, idx, entry = random.choice(all_connections)
+                available_connections = []
                 element_type = remaining_elements.pop()
+                for conn_name, idx, entry in all_connections:
+                    if all(element['type'] != element_type for element in entry['elements']):
+                        available_connections.append((conn_name, idx, entry))
+
+                if available_connections:
+                    conn_name, idx, entry = random.choice(available_connections)
+                else:
+                    conn_name, idx, entry = random.choice(all_connections)
+
                 entry['elements'].append({'type': element_type})

@@ -1,16 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+import os
 
 from src.common.draw_functions import draw_resistor, draw_capacitor, draw_inductor
 from src.common.word_functions import add_schemes_to_word
+from src.common.generate_ltspice_netlists import generate_ltpsice_netlist
 
 from PIL import Image, PngImagePlugin
 import io
 
 from conf.config import SCALE
-
-SCHEMES_FOLDER = 'schemes'
+from conf.config import IMAGES_FOLDER
+from conf.config import SPICE_FOLDER
 
 
 def generate_filter_scheme_topology(scheme_type):
@@ -489,8 +491,11 @@ def visualise_filter_scheme(scheme_nodes, quadripole_nodes, scheme_layout):
 
     for node, coords in scheme_nodes.items():
         plt.plot(coords['x'], coords['y'], 'ko', markersize=3)
-    for node, coords in quadripole_nodes.items():
-        plt.plot(coords['x'], coords['y'], 'ro', markersize=3, zorder=11)
+    quadripole_labels = ["1", "2", "1'", "2'"]
+
+    for idx, (node, coords) in enumerate(quadripole_nodes.items()):
+        plt.plot(coords['x'], coords['y'], 'ko', markersize=3, zorder=11)
+        plt.text(coords['x'], coords['y'] + 0.1, quadripole_labels[idx], ha='center', va='bottom', fontsize=8, color='black')
 
     resistor_idx = 1
     capacitor_idx = 1
@@ -595,320 +600,390 @@ def visualise_filter_scheme(scheme_nodes, quadripole_nodes, scheme_layout):
     plt.axis('off')
 
 
-def generate_filter_schemes_set(scheme_type, filter_type, save_path):
+def generate_filter_schemes_set(scheme_types, filter_types, save_path, generation_mode):
+
+    available_scheme_type_for_filter_type = {
+        "LPF": ["G", "P", "T"],
+        "HPF": ["G", "P", "T"],
+        "BPF": ["G", "P", "T"],
+        "BSF": ["G", "T_back_coupling"]
+    }
+
+    available_circuits = []
+
+    for filter_type in filter_types:
+        for scheme_type in scheme_types:
+            if scheme_type in available_scheme_type_for_filter_type[filter_type]:
+                available_circuits.append({'filter_type': filter_type, 'scheme_type': scheme_type})
+
+    num_of_each_circuit_in_set = 30 // len(available_circuits)
+
+    for available_circuit in available_circuits:
+        available_circuit['amount'] = num_of_each_circuit_in_set
+
+    num_of_remainder_circuits = 30 - (len(available_circuits) * num_of_each_circuit_in_set)
+
+    if num_of_remainder_circuits > 0:
+        for _ in range(num_of_remainder_circuits):
+            random_circuit = random.choice(available_circuits)
+            random_circuit['amount'] += 1
+
     schemes = []
 
-    if filter_type == 'LPF':
-        if scheme_type == 'G':
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('resistor')
-                scheme_layout['node2->node5'][0]['elements'].append('capacitor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+    for available_circuit in available_circuits:
+        filter_type, scheme_type, amount = available_circuit['filter_type'], available_circuit['scheme_type'], available_circuit['amount']
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('inductor')
-                scheme_layout['node2->node5'][0]['elements'].append('resistor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+        if filter_type == 'LPF':
+            if scheme_type == 'G':
+                for _ in range(amount):
+                    random_int = random.randint(1, 3)
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('inductor')
-                scheme_layout['node2->node5'][0]['elements'].append('capacitor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    if random_int == 1:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('resistor')
+                        scheme_layout['node2->node5'][0]['elements'].append('capacitor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-        if scheme_type == 'P':
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node2->node3'][0]['elements'].append('resistor')
-                scheme_layout['node2->node6'][0]['elements'].append('capacitor')
-                scheme_layout['node3->node7'][0]['elements'].append('capacitor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    elif random_int == 2:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('inductor')
+                        scheme_layout['node2->node5'][0]['elements'].append('resistor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node2->node3'][0]['elements'].append('inductor')
-                scheme_layout['node2->node6'][0]['elements'].append('resistor')
-                scheme_layout['node3->node7'][0]['elements'].append('resistor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    else:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('inductor')
+                        scheme_layout['node2->node5'][0]['elements'].append('capacitor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node2->node3'][0]['elements'].append('inductor')
-                scheme_layout['node2->node6'][0]['elements'].append('capacitor')
-                scheme_layout['node3->node7'][0]['elements'].append('capacitor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+            if scheme_type == 'P':
+                for _ in range(amount):
+                    random_int = random.randint(1, 3)
 
-        if scheme_type == 'T':
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('resistor')
-                scheme_layout['node2->node3'][0]['elements'].append('resistor')
-                scheme_layout['node2->node5'][0]['elements'].append('capacitor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    if random_int == 1:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node2->node3'][0]['elements'].append('resistor')
+                        scheme_layout['node2->node6'][0]['elements'].append('capacitor')
+                        scheme_layout['node3->node7'][0]['elements'].append('capacitor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('inductor')
-                scheme_layout['node2->node3'][0]['elements'].append('inductor')
-                scheme_layout['node2->node5'][0]['elements'].append('resistor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    elif random_int == 2:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node2->node3'][0]['elements'].append('inductor')
+                        scheme_layout['node2->node6'][0]['elements'].append('resistor')
+                        scheme_layout['node3->node7'][0]['elements'].append('resistor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('inductor')
-                scheme_layout['node2->node3'][0]['elements'].append('inductor')
-                scheme_layout['node2->node5'][0]['elements'].append('capacitor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    else:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node2->node3'][0]['elements'].append('inductor')
+                        scheme_layout['node2->node6'][0]['elements'].append('capacitor')
+                        scheme_layout['node3->node7'][0]['elements'].append('capacitor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-    if filter_type == 'HPF':
-        if scheme_type == 'G':
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node5'][0]['elements'].append('resistor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+            if scheme_type == 'T':
+                for _ in range(amount):
+                    random_int = random.randint(1, 3)
+                    if random_int == 1:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('resistor')
+                        scheme_layout['node2->node3'][0]['elements'].append('resistor')
+                        scheme_layout['node2->node5'][0]['elements'].append('capacitor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('resistor')
-                scheme_layout['node2->node5'][0]['elements'].append('inductor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    elif random_int == 2:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('inductor')
+                        scheme_layout['node2->node3'][0]['elements'].append('inductor')
+                        scheme_layout['node2->node5'][0]['elements'].append('resistor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node5'][0]['elements'].append('inductor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    else:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('inductor')
+                        scheme_layout['node2->node3'][0]['elements'].append('inductor')
+                        scheme_layout['node2->node5'][0]['elements'].append('capacitor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-        if scheme_type == 'P':
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node2->node3'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node6'][0]['elements'].append('resistor')
-                scheme_layout['node3->node7'][0]['elements'].append('resistor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+        if filter_type == 'HPF':
+            if scheme_type == 'G':
+                for _ in range(amount):
+                    random_int = random.randint(1, 3)
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node2->node3'][0]['elements'].append('resistor')
-                scheme_layout['node2->node6'][0]['elements'].append('inductor')
-                scheme_layout['node3->node7'][0]['elements'].append('inductor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    if random_int == 1:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('capacitor')
+                        scheme_layout['node2->node5'][0]['elements'].append('resistor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node2->node3'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node6'][0]['elements'].append('inductor')
-                scheme_layout['node3->node7'][0]['elements'].append('inductor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    elif random_int == 2:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('resistor')
+                        scheme_layout['node2->node5'][0]['elements'].append('inductor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-        if scheme_type == 'T':
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node3'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node5'][0]['elements'].append('resistor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    else:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('capacitor')
+                        scheme_layout['node2->node5'][0]['elements'].append('inductor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('resistor')
-                scheme_layout['node2->node3'][0]['elements'].append('resistor')
-                scheme_layout['node2->node5'][0]['elements'].append('inductor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+            if scheme_type == 'P':
+                for _ in range(amount):
+                    random_int = random.randint(1, 3)
 
-            for _ in range(11):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node3'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node5'][0]['elements'].append('inductor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    if random_int == 1:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node2->node3'][0]['elements'].append('capacitor')
+                        scheme_layout['node2->node6'][0]['elements'].append('resistor')
+                        scheme_layout['node3->node7'][0]['elements'].append('resistor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-    if filter_type == 'BPF':
-        if scheme_type == 'G':
-            for _ in range(31):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('inductor')
-                scheme_layout['node1->node2'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node5'][0]['elements'].append('resistor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    elif random_int == 2:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node2->node3'][0]['elements'].append('resistor')
+                        scheme_layout['node2->node6'][0]['elements'].append('inductor')
+                        scheme_layout['node3->node7'][0]['elements'].append('inductor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-        if scheme_type == 'P':
-            for _ in range(31):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node2->node3'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node3'][0]['elements'].append('resistor')
-                scheme_layout['node2->node6'][0]['elements'].append('resistor')
-                scheme_layout['node3->node7'][0]['elements'].append('capacitor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    else:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node2->node3'][0]['elements'].append('capacitor')
+                        scheme_layout['node2->node6'][0]['elements'].append('inductor')
+                        scheme_layout['node3->node7'][0]['elements'].append('inductor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-        if scheme_type == 'T':
-            for _ in range(31):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('resistor')
-                scheme_layout['node2->node3'][0]['elements'].append('inductor')
-                scheme_layout['node2->node5'][0]['elements'].append('inductor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+            if scheme_type == 'T':
+                for _ in range(amount):
+                    random_int = random.randint(1, 3)
 
-    if filter_type == 'BSF':
-        if scheme_type == 'G':
-            for _ in range(31):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node1->node2'][0]['elements'].append('resistor')
-                scheme_layout['node2->node5'][0]['elements'].append('inductor')
-                scheme_layout['node2->node5'][0]['elements'].append('capacitor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    if random_int == 1:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('capacitor')
+                        scheme_layout['node2->node3'][0]['elements'].append('capacitor')
+                        scheme_layout['node2->node5'][0]['elements'].append('resistor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
 
-        if scheme_type == 'T_back_coupling':
-            for _ in range(31):
-                scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
-                    scheme_type=scheme_type
-                )
-                scheme_layout['node2->node3'][0]['elements'].append('capacitor')
-                scheme_layout['node3->node5'][0]['elements'].append('capacitor')
-                scheme_layout['node2->node4'][0]['elements'].append('resistor')
-                scheme_layout['node4->node5'][0]['elements'].append('resistor')
-                scheme_layout['node3->node8'][0]['elements'].append('resistor')
-                scheme_layout['node4->node9'][0]['elements'].append('capacitor')
-                schemes.append({
-                    "scheme_nodes": scheme_nodes,
-                    "quadripole_nodes": quadripole_nodes,
-                    "scheme_layout": scheme_layout
-                })
+                    elif random_int == 2:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('resistor')
+                        scheme_layout['node2->node3'][0]['elements'].append('resistor')
+                        scheme_layout['node2->node5'][0]['elements'].append('inductor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
+
+                    else:
+                        scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                            scheme_type=scheme_type
+                        )
+                        scheme_layout['node1->node2'][0]['elements'].append('capacitor')
+                        scheme_layout['node2->node3'][0]['elements'].append('capacitor')
+                        scheme_layout['node2->node5'][0]['elements'].append('inductor')
+                        schemes.append({
+                            "scheme_nodes": scheme_nodes,
+                            "quadripole_nodes": quadripole_nodes,
+                            "scheme_layout": scheme_layout,
+                            "filter_type": filter_type
+                        })
+
+        if filter_type == 'BPF':
+            if scheme_type == 'G':
+                for _ in range(amount):
+                    scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                        scheme_type=scheme_type
+                    )
+                    scheme_layout['node1->node2'][0]['elements'].append('inductor')
+                    scheme_layout['node1->node2'][0]['elements'].append('capacitor')
+                    scheme_layout['node2->node5'][0]['elements'].append('resistor')
+                    schemes.append({
+                        "scheme_nodes": scheme_nodes,
+                        "quadripole_nodes": quadripole_nodes,
+                        "scheme_layout": scheme_layout,
+                        "filter_type": filter_type
+                    })
+
+            if scheme_type == 'P':
+                for _ in range(amount):
+                    scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                        scheme_type=scheme_type
+                    )
+                    scheme_layout['node2->node3'][0]['elements'].append('capacitor')
+                    scheme_layout['node2->node3'][0]['elements'].append('resistor')
+                    scheme_layout['node2->node6'][0]['elements'].append('resistor')
+                    scheme_layout['node3->node7'][0]['elements'].append('capacitor')
+                    schemes.append({
+                        "scheme_nodes": scheme_nodes,
+                        "quadripole_nodes": quadripole_nodes,
+                        "scheme_layout": scheme_layout,
+                        "filter_type": filter_type
+                    })
+
+            if scheme_type == 'T':
+                for _ in range(amount):
+                    scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                        scheme_type=scheme_type
+                    )
+                    scheme_layout['node1->node2'][0]['elements'].append('resistor')
+                    scheme_layout['node2->node3'][0]['elements'].append('inductor')
+                    scheme_layout['node2->node5'][0]['elements'].append('inductor')
+                    schemes.append({
+                        "scheme_nodes": scheme_nodes,
+                        "quadripole_nodes": quadripole_nodes,
+                        "scheme_layout": scheme_layout,
+                        "filter_type": filter_type
+                    })
+
+        if filter_type == 'BSF':
+            if scheme_type == 'G':
+                for _ in range(amount):
+                    scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                        scheme_type=scheme_type
+                    )
+                    scheme_layout['node1->node2'][0]['elements'].append('resistor')
+                    scheme_layout['node2->node5'][0]['elements'].append('inductor')
+                    scheme_layout['node2->node5'][0]['elements'].append('capacitor')
+                    schemes.append({
+                        "scheme_nodes": scheme_nodes,
+                        "quadripole_nodes": quadripole_nodes,
+                        "scheme_layout": scheme_layout,
+                        "filter_type": filter_type
+                    })
+
+            if scheme_type == 'T_back_coupling':
+                for _ in range(amount):
+                    scheme_nodes, quadripole_nodes, scheme_layout = generate_filter_scheme_topology(
+                        scheme_type=scheme_type
+                    )
+                    scheme_layout['node2->node3'][0]['elements'].append('capacitor')
+                    scheme_layout['node3->node5'][0]['elements'].append('capacitor')
+                    scheme_layout['node2->node4'][0]['elements'].append('resistor')
+                    scheme_layout['node4->node5'][0]['elements'].append('resistor')
+                    scheme_layout['node3->node8'][0]['elements'].append('resistor')
+                    scheme_layout['node4->node9'][0]['elements'].append('capacitor')
+                    schemes.append({
+                        "scheme_nodes": scheme_nodes,
+                        "quadripole_nodes": quadripole_nodes,
+                        "scheme_layout": scheme_layout,
+                        "filter_type": filter_type
+                    })
 
     status = {"code": "success", "message": "Набор схем успешно сгенерирован"}
     unique_schemes = []
@@ -927,6 +1002,9 @@ def generate_filter_schemes_set(scheme_type, filter_type, save_path):
             unique_schemes.append(random_scheme)
 
     random.shuffle(unique_schemes)
+
+    os.makedirs(f'{save_path}/{IMAGES_FOLDER}', exist_ok=True)
+    os.makedirs(f'{save_path}/{SPICE_FOLDER}', exist_ok=True)
 
     for idx, scheme in enumerate(unique_schemes, start=1):
         resistors_num = 0
@@ -957,18 +1035,57 @@ def generate_filter_schemes_set(scheme_type, filter_type, save_path):
         buf.seek(0)
         img = Image.open(buf)
 
-        meta = PngImagePlugin.PngInfo()
-        meta.add_text("voltage_sources_num", str(0))
-        meta.add_text("current_sources_num", str(0))
-        meta.add_text("resistors_num", str(resistors_num))
-        meta.add_text("capacitors_num", str(capacitors_num))
-        meta.add_text("inductors_num", str(inductors_num))
+        elements_values = {}
 
-        img.save(f'{save_path}/{SCHEMES_FOLDER}/scheme_{idx}.png', pnginfo=meta)
+        for i in range(resistors_num):
+            elements_values[f"R{i+1}"] = str(random.randint(5, 100))
+        for i in range(capacitors_num):
+            elements_values[f"C{i+1}"] = str(round(random.uniform(0.05, 1), 2))
+        for i in range(inductors_num):
+            elements_values[f"L{i+1}"] = str(random.randint(1, 20))
+
+        meta = PngImagePlugin.PngInfo()
+
+        if generation_mode == 'generate_values':
+            for element_name, element_value in elements_values.items():
+                if element_name.startswith("R"):
+                    meta.add_text(element_name, f"{element_value} Ом")
+                elif element_name.startswith("C"):
+                    meta.add_text(element_name, f"{element_value} мкФ")
+                elif element_name.startswith("L"):
+                    meta.add_text(element_name, f"{element_value} мГн")
+        elif generation_mode == 'generate_frequencies':
+            if scheme['filter_type'] == 'LPF':
+                freq = random.randint(1, 100)
+                meta.add_text('fc', f"{freq} кГц")
+
+            elif scheme['filter_type'] == 'HPF':
+                freq = random.randint(1, 100)
+                meta.add_text('fc', f"{freq} кГц")
+
+            elif scheme['filter_type'] == 'BPF':
+                f1 = random.randint(1, 99)
+                f2 = random.randint(f1 + 1, 100)
+                meta.add_text('f1', f"{f1} кГц")
+                meta.add_text('f2', f"{f2} кГц")
+
+            elif scheme['filter_type'] == 'BSF':
+                f1 = random.randint(1, 99)
+                f2 = random.randint(f1 + 1, 100)
+                meta.add_text('f1', f"{f1} кГц")
+                meta.add_text('f2', f"{f2} кГц")
+
+        img.save(f'{save_path}/{IMAGES_FOLDER}/scheme_{idx}.png', pnginfo=meta)
+
+        generate_ltpsice_netlist(
+            save_path=f'{save_path}/{SPICE_FOLDER}/scheme_{idx}.net',
+            circuit_layout=scheme["scheme_layout"],
+            elements_values=elements_values
+        )
 
     add_schemes_to_word(
         scheme_type="filter",
-        save_path=save_path
+        save_path=save_path,
     )
 
     return status

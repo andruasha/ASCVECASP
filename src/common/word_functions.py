@@ -1,18 +1,23 @@
 import random
 import os
 from docx import Document
-from docx.shared import Inches
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from PIL import Image
-
+from conf.config import IMAGES_FOLDER
+from conf.config import DOCX_NAME
 
 MAX_IMAGE_WIDTH_INCHES = 3
 NUMBER_COL_WIDTH = Inches(0.8)
-SCHEMES_FOLDER = 'schemes'
-OUTPUT_DOCX = 'generated_schemes.docx'
 
 
 def add_schemes_to_word(scheme_type, save_path):
     doc = Document()
+
+    style = doc.styles['Normal']
+    font = style.font
+    font.name = 'Times New Roman'
+    font.size = Pt(13)
 
     table = doc.add_table(rows=1, cols=3)
     table.style = 'Table Grid'
@@ -26,6 +31,13 @@ def add_schemes_to_word(scheme_type, save_path):
     hdr_cells[1].width = MAX_IMAGE_WIDTH_INCHES
     hdr_cells[2].width = Inches(2.5)
 
+    for cell in hdr_cells:
+        for paragraph in cell.paragraphs:
+            paragraph.style = doc.styles['Normal']
+            for run in paragraph.runs:
+                run.font.name = 'Times New Roman'
+                run.font.size = Pt(13)
+
     for i in range(1, 31):
         row_cells = table.add_row().cells
         row_cells[0].text = str(i)
@@ -33,8 +45,17 @@ def add_schemes_to_word(scheme_type, save_path):
         row_cells[1].width = MAX_IMAGE_WIDTH_INCHES
         row_cells[2].width = Inches(2.5)
 
-        image_path = os.path.join(save_path, SCHEMES_FOLDER, f'scheme_{i}.png')
-        resistors_num = capacitors_num = inductors_num = 0
+        for paragraph in row_cells[0].paragraphs:
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        for cell in row_cells:
+            for paragraph in cell.paragraphs:
+                paragraph.style = doc.styles['Normal']
+                for run in paragraph.runs:
+                    run.font.name = 'Times New Roman'
+                    run.font.size = Pt(13)
+
+        image_path = os.path.join(save_path, IMAGES_FOLDER, f'scheme_{i}.png')
 
         if os.path.exists(image_path):
             with Image.open(image_path) as img:
@@ -46,11 +67,6 @@ def add_schemes_to_word(scheme_type, save_path):
                 row_cells[1].paragraphs[0].add_run().add_picture(image_path, width=display_width)
 
                 metadata = img.info
-                voltage_sources_num = int(metadata.get('voltage_sources_num', 0))
-                current_sources_num = int(metadata.get('current_sources_num', 0))
-                resistors_num = int(metadata.get('resistors_num', 0))
-                capacitors_num = int(metadata.get('capacitors_num', 0))
-                inductors_num = int(metadata.get('inductors_num', 0))
                 switch_info = metadata.get('switch_info', "no")
         else:
             row_cells[1].text = 'Изображение не найдено'
@@ -61,28 +77,26 @@ def add_schemes_to_word(scheme_type, save_path):
         currents = []
         resistors = []
 
-        for vs in range(1, voltage_sources_num + 1):
-            voltage = random.randint(15, 310)
-            voltages.append(voltage)
-            descriptions.append(f"V{vs}={voltage} В")
-
-        for cs in range(1, current_sources_num + 1):
-            current = round(random.uniform(0.15, 3), 2)
-            currents.append(current)
-            descriptions.append(f"I{cs}={current} А")
-
-        for r in range(1, resistors_num + 1):
-            resistance = random.randint(5, 100)
-            resistors.append(resistance)
-            descriptions.append(f"R{r}={resistance} Ом")
-
-        for c in range(1, capacitors_num + 1):
-            capacity = round(random.uniform(0.05, 1), 2)
-            descriptions.append(f"C{c}={capacity} мкФ")
-
-        for l in range(1, inductors_num + 1):
-            inductance = random.randint(1, 20)
-            descriptions.append(f"L{l}={inductance} мГн")
+        for element_name, element_value in metadata.items():
+            if element_name.startswith('V'):
+                descriptions.append(f"{element_name}={element_value}")
+                voltages.append(element_name)
+            elif element_name.startswith('I'):
+                descriptions.append(f"{element_name}={element_value.replace('.', ',')}")
+                currents.append(element_name)
+            elif element_name.startswith('R'):
+                descriptions.append(f"{element_name}={element_value}")
+                resistors.append(element_name)
+            elif element_name.startswith('C'):
+                descriptions.append(f"{element_name}={element_value.replace('.', ',')}")
+            elif element_name.startswith('L'):
+                descriptions.append(f"{element_name}={element_value}")
+            elif element_name.startswith('fc'):
+                descriptions.append(f"{element_name}={element_value}")
+            elif element_name.startswith('f1'):
+                descriptions.append(f"{element_name}={element_value}")
+            elif element_name.startswith('f2'):
+                descriptions.append(f"{element_name}={element_value}")
 
         if scheme_type == "alternating_current" or scheme_type == "transient_processes":
             frequency = random.randint(1, 20)
@@ -107,11 +121,10 @@ def add_schemes_to_word(scheme_type, save_path):
 
         if switch_info != "no":
             if switch_info == "opening":
-                descriptions.append("Ключ открывается")
+                descriptions.append("Ключ замыкается")
             elif switch_info == "closing":
-                descriptions.append("Ключ закрывается")
+                descriptions.append("Ключ размыкается")
 
         row_cells[2].text = '\n'.join(descriptions)
 
-    doc.save(f'{save_path}/{OUTPUT_DOCX}')
-    print(f'Файл сохранён: {OUTPUT_DOCX}')
+    doc.save(f'{save_path}/{DOCX_NAME}')

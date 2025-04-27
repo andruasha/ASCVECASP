@@ -1,17 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+import os
 
 from src.common.draw_functions import draw_resistor, draw_capacitor, draw_inductor
 from src.common.word_functions import add_schemes_to_word
+from src.common.generate_ltspice_netlists import generate_ltpsice_netlist
 
 from PIL import Image, PngImagePlugin
 import io
 
 from conf.config import SCALE
-
-
-SCHEMES_FOLDER = 'schemes'
+from conf.config import IMAGES_FOLDER
+from conf.config import SPICE_FOLDER
 
 
 def generate_active_quadripole_scheme_topology(scheme_type):
@@ -480,8 +481,11 @@ def visualise_active_quadripole_scheme(scheme_nodes, quadripole_nodes, scheme_la
 
     for node, coords in scheme_nodes.items():
         plt.plot(coords['x'], coords['y'], 'ko', markersize=3)
-    for node, coords in quadripole_nodes.items():
-        plt.plot(coords['x'], coords['y'], 'ro', markersize=3, zorder=11)
+
+    quadripole_labels = ["1", "2", "1'", "2'"]
+    for idx, (node, coords) in enumerate(quadripole_nodes.items()):
+        plt.plot(coords['x'], coords['y'], 'ko', markersize=3, zorder=11)
+        plt.text(coords['x'], coords['y'] + 0.1, quadripole_labels[idx], ha='center', va='bottom', fontsize=8, color='black')
 
     resistor_idx = 1
     capacitor_idx = 1
@@ -625,6 +629,9 @@ def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors
 
     random.shuffle(unique_schemes)
 
+    os.makedirs(f'{save_path}/{IMAGES_FOLDER}', exist_ok=True)
+    os.makedirs(f'{save_path}/{SPICE_FOLDER}', exist_ok=True)
+
     for idx, scheme in enumerate(unique_schemes, start=1):
         visualise_active_quadripole_scheme(
             scheme_nodes=scheme["scheme_nodes"],
@@ -640,14 +647,32 @@ def generate_active_quadripole_schemes_set(scheme_type, resistors_num, inductors
         buf.seek(0)
         img = Image.open(buf)
 
-        meta = PngImagePlugin.PngInfo()
-        meta.add_text("voltage_sources_num", str(0))
-        meta.add_text("current_sources_num", str(0))
-        meta.add_text("resistors_num", str(resistors_num))
-        meta.add_text("capacitors_num", str(capacitors_num))
-        meta.add_text("inductors_num", str(inductors_num))
+        elements_values = {}
 
-        img.save(f'{save_path}/{SCHEMES_FOLDER}/scheme_{idx}.png', pnginfo=meta)
+        for i in range(resistors_num):
+            elements_values[f"R{i+1}"] = str(random.randint(5, 100))
+        for i in range(capacitors_num):
+            elements_values[f"C{i+1}"] = str(round(random.uniform(0.05, 1), 2))
+        for i in range(inductors_num):
+            elements_values[f"L{i+1}"] = str(random.randint(1, 20))
+
+        meta = PngImagePlugin.PngInfo()
+
+        for element_name, element_value in elements_values.items():
+            if element_name.startswith("R"):
+                meta.add_text(element_name, f"{element_value} Ом")
+            elif element_name.startswith("C"):
+                meta.add_text(element_name, f"{element_value} мкФ")
+            elif element_name.startswith("L"):
+                meta.add_text(element_name, f"{element_value} мГн")
+
+        img.save(f'{save_path}/{IMAGES_FOLDER}/scheme_{idx}.png', pnginfo=meta)
+
+        generate_ltpsice_netlist(
+            save_path=f'{save_path}/{SPICE_FOLDER}/scheme_{idx}.net',
+            circuit_layout=scheme["scheme_layout"],
+            elements_values=elements_values
+        )
 
     add_schemes_to_word(
         scheme_type="active_quadripole",
