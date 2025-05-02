@@ -6,7 +6,7 @@ from PIL import Image, PngImagePlugin
 from conf.config import SCALE
 from conf.config import IMAGES_FOLDER
 from conf.config import SPICE_FOLDER
-from src.common.compare_functions import compare_topologies, compare_layouts
+from src.common.compare_functions import is_topologies_equal, is_layouts_equal
 from src.common.electric_circuit import ElectricCircuit
 from src.common.elements_places import ElementsPlacer
 from src.common.visualize_circuit import CircuitVisualize
@@ -35,7 +35,7 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
     def get_unique_topologies(topologies, needed_count):
         unique = []
         for topo in topologies:
-            if all(not compare_topologies(topo, u) for u in unique):
+            if all(not is_topologies_equal(topo, u) for u in unique):
                 unique.append(topo)
                 if len(unique) >= needed_count:
                     break
@@ -101,9 +101,10 @@ def generate_schemes_set(nodes_num, branches_num, voltage_sources_num, current_s
         is_unique = True
 
         for existing_topology, existing_circuit in unique_schemes:
-            if compare_layouts(circuit_1.layout, existing_circuit.layout) and compare_topologies(topology_1, existing_topology):
-                is_unique = False
-                break
+            if is_topologies_equal(topology_1, existing_topology):
+                if is_layouts_equal(circuit_1.layout, existing_circuit.layout):
+                    is_unique = False
+                    break
 
         if is_unique:
             unique_schemes.append((topology_1, circuit_1))
