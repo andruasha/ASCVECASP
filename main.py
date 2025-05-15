@@ -155,6 +155,7 @@ scheme_type_display_mapping = {
     "G": "Г-образная",
     "P": "П-образная",
     "T": "Т-образная",
+    "T_bridge": "Т-образная мостовая",
     "T_back_coupling": "Т-образная с обратной связью"
 }
 scheme_type_reverse_mapping = {v: k for k, v in scheme_type_display_mapping.items()}
@@ -163,6 +164,7 @@ generation_mode_mapping = {
     "Генерировать номиналы элементов": "generate_values",
     "Генерировать граничные частоты": "generate_frequencies"
 }
+
 
 class SchemeGenerator(QWidget):
     def __init__(self):

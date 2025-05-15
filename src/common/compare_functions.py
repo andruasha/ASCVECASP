@@ -1,4 +1,4 @@
-def compare_topologies(circuit_topology_1, circuit_topology_2):
+def is_topologies_equal(circuit_topology_1, circuit_topology_2):
     def normalize_connection(node_a, node_b):
         return "->".join(sorted([node_a, node_b]))
 
@@ -18,13 +18,21 @@ def compare_topologies(circuit_topology_1, circuit_topology_2):
     return rep1 == rep2
 
 
-def compare_layouts(circuit_layout_1, circuit_layout_2):
+def is_layouts_equal(circuit_layout_1, circuit_layout_2):
+    def is_lists_equal(list1, list2):
+        temp2 = list2.copy()
+        try:
+            for item in list1:
+                temp2.remove(item)
+        except ValueError:
+            return False
+        return not temp2
+
     absolutely_unique = True
     for connection_name_1, connection_params_1 in circuit_layout_1.items():
         for connection_name_2, connection_params_2 in circuit_layout_2.items():
             splited_name_1 = connection_name_1.split('->')
-            if (connection_name_2 == connection_params_1) or (
-                    connection_name_2 == f"{splited_name_1[1]}->{splited_name_1[0]}"):
+            if (connection_name_2 == f"{splited_name_1[0]}->{splited_name_1[1]}") or (connection_name_2 == f"{splited_name_1[1]}->{splited_name_1[0]}"):
                 if len(connection_params_1) == len(connection_params_2):
                     connection_elements_1 = []
                     connection_elements_2 = []
@@ -35,12 +43,7 @@ def compare_layouts(circuit_layout_1, circuit_layout_2):
                     for sub_connection in connection_params_2:
                         connection_elements_2.append(sub_connection[0]['elements'])
 
-                    set1 = {tuple(sorted(tuple(element.items()) for element in sub_list))
-                            for sub_list in connection_elements_1}
-                    set2 = {tuple(sorted(tuple(element.items()) for element in sub_list))
-                            for sub_list in connection_elements_2}
-
-                    if set1 != set2:
+                    if not is_lists_equal(connection_elements_1, connection_elements_2):
                         absolutely_unique = False
 
     return absolutely_unique
